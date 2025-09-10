@@ -19,8 +19,8 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
 
         // 캐시가 없으면 API 호출
         const [targetsResponse, membersResponse] = await Promise.all([
-          fetch("http://localhost:3001/api/get-current-active-targets"),
-          fetch("http://localhost:3001/api/get-members"),
+          fetch("/api/get-current-active-targets"),
+          fetch("/api/get-members"),
         ]);
 
         const targetsData = await targetsResponse.json();

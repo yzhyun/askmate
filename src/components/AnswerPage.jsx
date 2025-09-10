@@ -16,7 +16,7 @@ function AnswerPage() {
       try {
         // 먼저 활성 회차가 있는지 확인
         const roundResponse = await fetch(
-          "http://localhost:3001/api/rounds/current"
+          "/api/rounds/current"
         );
         const roundData = await roundResponse.json();
 
@@ -31,8 +31,8 @@ function AnswerPage() {
         const [questionsResponse, targetsResponse, answersResponse] =
           await Promise.all([
             loadQuestionsFromServer(),
-            fetch("http://localhost:3001/api/get-targets"),
-            fetch("http://localhost:3001/api/get-answers"),
+            fetch("/api/get-targets"),
+            fetch("/api/get-answers"),
           ]);
 
         const serverQuestions = questionsResponse;
@@ -101,7 +101,7 @@ function AnswerPage() {
     if (!question) return;
 
     try {
-      const response = await fetch("http://localhost:3001/api/save-answer", {
+      const response = await fetch("/api/save-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -227,7 +227,7 @@ function AnswerPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:3001/api/save-answer", {
+      const response = await fetch("/api/save-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

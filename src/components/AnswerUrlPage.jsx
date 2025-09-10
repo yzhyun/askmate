@@ -19,7 +19,7 @@ function AnswerUrlPage() {
     const loadCurrentRound = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3001/api/rounds/current"
+          "/api/rounds/current"
         );
         const data = await response.json();
         if (data.success && data.round) {
@@ -44,7 +44,7 @@ function AnswerUrlPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/answer/${answererName}/${password}`
+        `/api/answer/${answererName}/${password}`
       );
       const data = await response.json();
 
