@@ -18,7 +18,9 @@ export default async function handler(req, res) {
     `;
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: "관리자 비밀번호가 설정되지 않았습니다." });
+      return res
+        .status(401)
+        .json({ error: "관리자 비밀번호가 설정되지 않았습니다." });
     }
 
     const storedPassword = result.rows[0].password;
