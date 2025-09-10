@@ -185,14 +185,18 @@ const AdminPage = () => {
   // 질문하지 않은 멤버 조회 (간소화)
   const getUnaskedMembers = async (answererName) => {
     // 일단 모든 활성 멤버를 반환 (나중에 필요시 구현)
-    const activeMembers = members.filter(member => member.is_active);
+    const activeMembers = members.filter((member) => member.is_active);
     setUnaskedMembers((prev) => ({
       ...prev,
-      [answererName]: activeMembers.map(m => m.name),
+      [answererName]: activeMembers.map((m) => m.name),
     }));
-    
+
     if (activeMembers.length > 0) {
-      showMessage(`${answererName}님에게 질문 가능한 멤버: ${activeMembers.map(m => m.name).join(", ")}`);
+      showMessage(
+        `${answererName}님에게 질문 가능한 멤버: ${activeMembers
+          .map((m) => m.name)
+          .join(", ")}`
+      );
     } else {
       showMessage("활성 멤버가 없습니다.");
     }
