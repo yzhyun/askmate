@@ -32,7 +32,7 @@ const AdminPage = () => {
 
   // API 기본 URL
 
-  // 답변자 통계 로드 함수
+  // 답변자 통계 로드 함수 (간소화)
   const loadAnswererStats = async (roundsData, targetsData) => {
     const answererStats = {};
     for (const round of roundsData) {
@@ -43,36 +43,13 @@ const AdminPage = () => {
         (target) => target.round_id === round.id
       );
 
-      try {
-        const [questions, answers] = await Promise.all([
-          api.get(`/api/rounds/${round.id}/questions`),
-          api.get(`/api/rounds/${round.id}/answers`),
-        ]);
-
-        const questionList = questions.questions || [];
-        const answerList = answers.answers || [];
-
-        roundTargets.forEach((target) => {
-          const questionCount = questionList.filter(
-            (q) => q.target === target.name
-          ).length;
-          const answerCount = answerList.filter(
-            (a) => a.answerer === target.name
-          ).length;
-          answererStats[round.id][target.name] = {
-            questions: questionCount,
-            answers: answerCount,
-          };
-        });
-      } catch (error) {
-        console.error(`회차 ${round.id} 통계 조회 오류:`, error);
-        roundTargets.forEach((target) => {
-          answererStats[round.id][target.name] = {
-            questions: 0,
-            answers: 0,
-          };
-        });
-      }
+      // 통계는 일단 0으로 초기화 (나중에 필요시 구현)
+      roundTargets.forEach((target) => {
+        answererStats[round.id][target.name] = {
+          questions: 0,
+          answers: 0,
+        };
+      });
     }
     setRoundQuestions(answererStats);
   };
