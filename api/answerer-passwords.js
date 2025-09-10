@@ -27,13 +27,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
       }
 
+      // 기존 비밀번호가 있으면 삭제하고 새로 생성
+      await sql`DELETE FROM answerer_passwords WHERE answerer_name = ${answererName}`;
+      
       const result = await sql`
         INSERT INTO answerer_passwords (answerer_name, password)
         VALUES (${answererName}, ${password})
-        ON CONFLICT (answerer_name) 
-        DO UPDATE SET 
-          password = EXCLUDED.password,
-          created_at = CURRENT_TIMESTAMP
         RETURNING id, answerer_name, password, created_at
       `;
 

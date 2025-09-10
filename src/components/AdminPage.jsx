@@ -246,7 +246,7 @@ const AdminPage = () => {
         // 답변자 추가
         await api.post("/api/targets", { name: answererName });
 
-        // 4자리 비밀번호 생성 및 설정
+        // 4자리 비밀번호 생성 (매번 다른 비밀번호)
         const autoPassword = Math.floor(1000 + Math.random() * 9000).toString();
         await api.post("/api/answerer-passwords", {
           answererName: answererName,
