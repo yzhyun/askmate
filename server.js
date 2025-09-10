@@ -510,8 +510,8 @@ app.post("/api/admin/set-password", async (req, res) => {
   try {
     const { password } = req.body;
 
-    if (!password || password.length !== 8) {
-      return res.status(400).json({ error: "8자리 비밀번호를 입력해주세요." });
+    if (!password || password.length < 4) {
+      return res.status(400).json({ error: "4자리 이상의 비밀번호를 입력해주세요." });
     }
 
     await setAdminPassword(password);
