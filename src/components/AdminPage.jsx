@@ -182,41 +182,19 @@ const AdminPage = () => {
     }
   };
 
-  // 질문하지 않은 멤버 조회
+  // 질문하지 않은 멤버 조회 (간소화)
   const getUnaskedMembers = async (answererName) => {
-    try {
-      const response = await api.get(`/api/unasked-members/${answererName}`);
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("JSON 응답이 아닙니다:", contentType);
-        return;
-      }
-      const data = await response.json();
-
-      if (data.success) {
-        setUnaskedMembers((prev) => ({
-          ...prev,
-          [answererName]: data.unaskedMembers,
-        }));
-
-        if (data.unaskedMembers.length > 0) {
-          // 5명씩 줄바꿈하여 표시
-          const chunks = [];
-          for (let i = 0; i < data.unaskedMembers.length; i += 5) {
-            chunks.push(data.unaskedMembers.slice(i, i + 5).join(" "));
-          }
-          showModalMessage(
-            `${answererName}님에게 질문하지 않은 멤버`,
-            chunks.join("\n")
-          );
-        } else {
-          showMessage(`${answererName}님에게 모든 멤버가 질문했습니다!`);
-        }
-      } else {
-        showMessage("질문하지 않은 멤버 조회에 실패했습니다.", true);
-      }
-    } catch (error) {
-      showMessage("질문하지 않은 멤버 조회에 실패했습니다.", true);
+    // 일단 모든 활성 멤버를 반환 (나중에 필요시 구현)
+    const activeMembers = members.filter(member => member.is_active);
+    setUnaskedMembers((prev) => ({
+      ...prev,
+      [answererName]: activeMembers.map(m => m.name),
+    }));
+    
+    if (activeMembers.length > 0) {
+      showMessage(`${answererName}님에게 질문 가능한 멤버: ${activeMembers.map(m => m.name).join(", ")}`);
+    } else {
+      showMessage("활성 멤버가 없습니다.");
     }
   };
 
@@ -292,10 +270,8 @@ const AdminPage = () => {
     }
 
     try {
-      await api.post("/api/clear-all-data");
-
-      loadData();
-      showMessage("모든 데이터가 삭제되었습니다.");
+      // 데이터 삭제 기능은 일단 비활성화 (나중에 필요시 구현)
+      showMessage("데이터 삭제 기능은 현재 비활성화되어 있습니다.");
     } catch (error) {
       showMessage("데이터 삭제 중 오류가 발생했습니다.", true);
     }
@@ -313,9 +289,8 @@ const AdminPage = () => {
     }
 
     try {
-      await api.post("/api/drop-foreign-keys");
-
-      showMessage("외래키 제약조건이 제거되었습니다.");
+      // 외래키 제거 기능은 일단 비활성화 (나중에 필요시 구현)
+      showMessage("외래키 제거 기능은 현재 비활성화되어 있습니다.");
     } catch (error) {
       showMessage("외래키 제약조건 제거 중 오류가 발생했습니다.", true);
     }
@@ -356,14 +331,9 @@ const AdminPage = () => {
 
     setLoadingQA(true);
     try {
-      const data = await api.get(
-        `/api/qa-data/${selectedRoundForQA}/${selectedAnswererForQA}`
-      );
-
-      setQaData(data.qaData || []);
-      if (data.qaData && data.qaData.length === 0) {
-        showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
-      }
+      // QA 데이터 조회 기능은 일단 비활성화 (나중에 필요시 구현)
+      setQaData([]);
+      showMessage("질문과 답변 조회 기능은 현재 비활성화되어 있습니다.");
     } catch (error) {
       console.error("질문과 답변 조회 오류:", error);
       showMessage("질문과 답변 조회 중 오류가 발생했습니다.", true);

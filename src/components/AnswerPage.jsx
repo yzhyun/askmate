@@ -47,7 +47,7 @@ function AnswerPage() {
         // 질문, 대상자, 답변을 병렬로 로드
         const [serverQuestions, targetsData, answersData] = await Promise.all([
           loadQuestionsFromServer(),
-          api.get("/api/get-targets"),
+          api.get("/api/targets"),
           api.get("/api/get-data?type=answers"),
         ]);
 

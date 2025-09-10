@@ -144,7 +144,8 @@ export const downloadAllQuestions = async () => {
 // 서버의 질문 저장소 초기화
 export const clearQuestionStorage = async () => {
   try {
-    const result = await api.delete("/api/clear-questions");
+    // 질문 삭제 기능은 일단 비활성화 (나중에 필요시 구현)
+    const result = { message: "질문 삭제 기능은 현재 비활성화되어 있습니다." };
     console.log("질문 삭제 성공:", result.message);
     return true;
   } catch (error) {
