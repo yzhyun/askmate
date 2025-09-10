@@ -39,31 +39,47 @@ export async function safeFetch(url, options = {}) {
 export const api = {
   // GET 요청
   async get(endpoint) {
-    return await safeFetch(`${API_BASE}${endpoint}`);
+    const response = await fetch(`${API_BASE}${endpoint}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await safeJsonParse(response);
   },
   
   // POST 요청
   async post(endpoint, data) {
-    return await safeFetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await safeJsonParse(response);
   },
   
   // PUT 요청
   async put(endpoint, data) {
-    return await safeFetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await safeJsonParse(response);
   },
   
   // DELETE 요청
   async delete(endpoint) {
-    return await safeFetch(`${API_BASE}${endpoint}`, {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
       method: "DELETE",
     });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await safeJsonParse(response);
   }
 };

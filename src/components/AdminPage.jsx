@@ -96,21 +96,13 @@ const AdminPage = () => {
     setMessage("");
 
     try {
-      const response = await api.post("/api/admin/login", { password: adminPassword });
+      await api.post("/api/admin/login", {
+        password: adminPassword,
+      });
 
-      if (response.ok) {
-        setIsAuthenticated(true);
-        localStorage.setItem("adminAuthenticated", "true");
-        loadData();
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          setMessage(errorData.error || "인증에 실패했습니다.");
-        } else {
-          setMessage("서버 응답 오류가 발생했습니다.");
-        }
-      }
+      setIsAuthenticated(true);
+      localStorage.setItem("adminAuthenticated", "true");
+      loadData();
     } catch (error) {
       setMessage("서버 연결에 실패했습니다.");
     } finally {
@@ -121,14 +113,19 @@ const AdminPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [membersData, targetsData, passwordsData, roundsData, currentRoundData] =
-        await Promise.all([
-          api.get("/api/get-members"),
-          api.get("/api/get-targets"),
-          api.get("/api/get-answerer-passwords"),
-          api.get("/api/rounds"),
-          api.get("/api/rounds/current"),
-        ]);
+      const [
+        membersData,
+        targetsData,
+        passwordsData,
+        roundsData,
+        currentRoundData,
+      ] = await Promise.all([
+        api.get("/api/get-members"),
+        api.get("/api/get-targets"),
+        api.get("/api/get-answerer-passwords"),
+        api.get("/api/rounds"),
+        api.get("/api/rounds/current"),
+      ]);
 
       // 데이터 설정
       setMembers(membersData.members || []);
@@ -168,21 +165,13 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await api.post("/api/add-member", { name: newMemberName.trim() });
+      await api.post("/api/add-member", {
+        name: newMemberName.trim(),
+      });
 
-      if (response.ok) {
-        setNewMemberName("");
-        loadData();
-        showMessage("멤버가 추가되었습니다.");
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          showMessage(error.error || "멤버 추가에 실패했습니다.", true);
-        } else {
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-        }
-      }
+      setNewMemberName("");
+      loadData();
+      showMessage("멤버가 추가되었습니다.");
     } catch (error) {
       showMessage("멤버 추가에 실패했습니다.", true);
     }
@@ -208,15 +197,17 @@ const AdminPage = () => {
   // 답변자 링크 생성
   const generateAnswerUrl = async (answererName) => {
     try {
-      const response = await api.post("/api/generate-answer-url", { answererName });
+      const response = await api.post("/api/generate-answer-url", {
+        answererName,
+      });
 
       if (response.ok) {
         const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("JSON 응답이 아닙니다:", contentType);
-        return;
-      }
-      const data = await response.json();
+        if (!contentType || !contentType.includes("application/json")) {
+          console.error("JSON 응답이 아닙니다:", contentType);
+          return;
+        }
+        const data = await response.json();
         const url = `${window.location.origin}/answer/${answererName}`;
         navigator.clipboard.writeText(url);
         showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
@@ -451,11 +442,11 @@ const AdminPage = () => {
 
       if (response.ok) {
         const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        console.error("JSON 응답이 아닙니다:", contentType);
-        return;
-      }
-      const data = await response.json();
+        if (!contentType || !contentType.includes("application/json")) {
+          console.error("JSON 응답이 아닙니다:", contentType);
+          return;
+        }
+        const data = await response.json();
         setQaData(data.qaData || []);
         if (data.qaData && data.qaData.length === 0) {
           showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
