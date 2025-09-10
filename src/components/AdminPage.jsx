@@ -184,21 +184,28 @@ const AdminPage = () => {
 
   // 질문하지 않은 멤버 조회 (간소화)
   const getUnaskedMembers = async (answererName) => {
-    // 일단 모든 활성 멤버를 반환 (나중에 필요시 구현)
-    const activeMembers = members.filter((member) => member.is_active);
-    setUnaskedMembers((prev) => ({
-      ...prev,
-      [answererName]: activeMembers.map((m) => m.name),
-    }));
+    try {
+      // 멤버 데이터를 다시 로드하여 최신 상태 확인
+      const membersData = await api.get("/api/members");
+      const activeMembers = (membersData.members || []).filter((member) => member.is_active);
+      
+      setUnaskedMembers((prev) => ({
+        ...prev,
+        [answererName]: activeMembers.map((m) => m.name),
+      }));
 
-    if (activeMembers.length > 0) {
-      showMessage(
-        `${answererName}님에게 질문 가능한 멤버: ${activeMembers
-          .map((m) => m.name)
-          .join(", ")}`
-      );
-    } else {
-      showMessage("활성 멤버가 없습니다.");
+      if (activeMembers.length > 0) {
+        showMessage(
+          `${answererName}님에게 질문 가능한 멤버: ${activeMembers
+            .map((m) => m.name)
+            .join(", ")}`
+        );
+      } else {
+        showMessage("활성 멤버가 없습니다.");
+      }
+    } catch (error) {
+      console.error("멤버 조회 오류:", error);
+      showMessage("멤버 조회에 실패했습니다.", true);
     }
   };
 
