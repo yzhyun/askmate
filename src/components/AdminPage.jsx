@@ -451,7 +451,10 @@ const AdminPage = () => {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
-        showMessage(errorData.error || "데이터 삭제에 실패했습니다.", true);
+          showMessage(errorData.error || "데이터 삭제에 실패했습니다.", true);
+        } else {
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+        }
       }
     } catch (error) {
       showMessage("데이터 삭제 중 오류가 발생했습니다.", true);
@@ -481,10 +484,13 @@ const AdminPage = () => {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
-        showMessage(
-          errorData.error || "외래키 제약조건 제거에 실패했습니다.",
-          true
-        );
+          showMessage(
+            errorData.error || "외래키 제약조건 제거에 실패했습니다.",
+            true
+          );
+        } else {
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+        }
       }
     } catch (error) {
       showMessage("외래키 제약조건 제거 중 오류가 발생했습니다.", true);
