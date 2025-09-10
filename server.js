@@ -1076,7 +1076,13 @@ app.get("/api/qa-data/:roundId/:answererName", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`파일 저장 서버가 http://localhost:${PORT}에서 실행 중입니다.`);
-  console.log("💡 데이터베이스 초기화가 필요하다면: npm run init-db");
-});
+// Vercel에서는 export default를 사용
+export default app;
+
+// 로컬 개발 환경에서만 listen 실행
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`파일 저장 서버가 http://localhost:${PORT}에서 실행 중입니다.`);
+    console.log("💡 데이터베이스 초기화가 필요하다면: npm run init-db");
+  });
+}
