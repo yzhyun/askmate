@@ -16,7 +16,12 @@ export default async function handler(req, res) {
       });
     } catch (error) {
       console.error("답변자 비밀번호 조회 오류:", error);
-      res.status(500).json({ success: false, error: "답변자 비밀번호 조회에 실패했습니다." });
+      res
+        .status(500)
+        .json({
+          success: false,
+          error: "답변자 비밀번호 조회에 실패했습니다.",
+        });
     }
   } else if (req.method === "POST") {
     // 답변자 비밀번호 설정
@@ -24,12 +29,14 @@ export default async function handler(req, res) {
       const { answererName, password } = req.body;
 
       if (!answererName || !password) {
-        return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+        return res
+          .status(400)
+          .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
       }
 
       // 기존 비밀번호가 있으면 삭제하고 새로 생성
       await sql`DELETE FROM answerer_passwords WHERE answerer_name = ${answererName}`;
-      
+
       const result = await sql`
         INSERT INTO answerer_passwords (answerer_name, password)
         VALUES (${answererName}, ${password})

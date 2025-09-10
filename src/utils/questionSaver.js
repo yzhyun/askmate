@@ -32,7 +32,7 @@ const saveQuestionToLocalStorage = (questionData) => {
 // API를 통해 저장하는 함수
 const saveQuestionToAPI = async (questionData) => {
   try {
-    const result = await api.post("/api/save", { type: "question", ...questionData });
+    const result = await api.post("/api/data", { type: "question", ...questionData });
     console.log("질문 저장 성공:", result.message);
     return true;
   } catch (error) {
