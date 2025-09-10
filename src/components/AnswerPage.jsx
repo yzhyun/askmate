@@ -48,7 +48,7 @@ function AnswerPage() {
         const [serverQuestions, targetsData, answersData] = await Promise.all([
           loadQuestionsFromServer(),
           api.get("/api/get-targets"),
-          api.get("/api/get-answers"),
+          api.get("/api/get-data?type=answers"),
         ]);
 
         console.log("AnswerPage - 로드된 질문들:", serverQuestions);
@@ -113,7 +113,8 @@ function AnswerPage() {
     if (!question) return;
 
     try {
-      const result = await api.post("/api/save-answer", {
+      const result = await api.post("/api/save", {
+        type: "answer",
         questionId: questionId,
         answerer: "익명",
         answer: answerText,
@@ -227,7 +228,8 @@ function AnswerPage() {
     }
 
     try {
-      const result = await api.post("/api/save-answer", {
+      const result = await api.post("/api/save", {
+        type: "answer",
         questionId: questionId,
         answerer: "익명",
         answer: newAnswerText,
