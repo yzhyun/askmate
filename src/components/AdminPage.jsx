@@ -125,8 +125,6 @@ const AdminPage = () => {
       } else {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
-          const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           setMessage(errorData.error || "인증에 실패했습니다.");
         } else {
