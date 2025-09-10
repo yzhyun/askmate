@@ -136,7 +136,7 @@ const AdminPage = () => {
 
       // 통계 데이터는 기본 데이터 로드 후 별도로 로드
       setTimeout(() => {
-        loadAnswererStats(roundsData, targetsData);
+        loadAnswererStats(roundsData.rounds || [], targetsData.targets || []);
       }, 100);
     } catch (error) {
       console.error("데이터 로드 오류:", error);
@@ -181,14 +181,10 @@ const AdminPage = () => {
     if (!confirm("이 멤버를 비활성화하시겠습니까?")) return;
 
     try {
-      const response = await api.post("/api/deactivate-member", { memberId });
+      await api.post("/api/deactivate-member", { memberId });
 
-      if (response.ok) {
-        loadData();
-        showMessage("멤버가 비활성화되었습니다.");
-      } else {
-        showMessage("멤버 비활성화에 실패했습니다.", true);
-      }
+      loadData();
+      showMessage("멤버가 비활성화되었습니다.");
     } catch (error) {
       showMessage("멤버 비활성화에 실패했습니다.", true);
     }
@@ -197,23 +193,13 @@ const AdminPage = () => {
   // 답변자 링크 생성
   const generateAnswerUrl = async (answererName) => {
     try {
-      const response = await api.post("/api/generate-answer-url", {
+      const data = await api.post("/api/generate-answer-url", {
         answererName,
       });
 
-      if (response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("JSON 응답이 아닙니다:", contentType);
-          return;
-        }
-        const data = await response.json();
-        const url = `${window.location.origin}/answer/${answererName}`;
-        navigator.clipboard.writeText(url);
-        showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
-      } else {
-        showMessage("링크 생성에 실패했습니다.", true);
-      }
+      const url = `${window.location.origin}/answer/${answererName}`;
+      navigator.clipboard.writeText(url);
+      showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
     } catch (error) {
       showMessage("링크 생성에 실패했습니다.", true);
     }
@@ -272,59 +258,40 @@ const AdminPage = () => {
         today.getMonth() + 1
       }월 ${today.getDate()}일 회차`;
 
-      const response = await api.post("/api/rounds", {
+      const roundData = await api.post("/api/rounds", {
         title: roundTitle,
         description: `생성일: ${today.toLocaleDateString()}`,
       });
 
-      if (response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("JSON 응답이 아닙니다:", contentType);
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-          return;
-        }
-        const roundData = await response.json();
-        const newRoundId = roundData.round.id;
+      const newRoundId = roundData.round.id;
 
-        // 선택된 답변자들을 타겟으로 추가
-        const answererInfo = [];
-        for (const answererName of selectedAnswerers) {
-          // 답변자 추가
-          await api.post("/api/add-target", { name: answererName });
+      // 선택된 답변자들을 타겟으로 추가
+      const answererInfo = [];
+      for (const answererName of selectedAnswerers) {
+        // 답변자 추가
+        await api.post("/api/add-target", { name: answererName });
 
-          // 4자리 비밀번호 생성 및 설정
-          const autoPassword = Math.floor(
-            1000 + Math.random() * 9000
-          ).toString();
-          await api.post("/api/set-answerer-password", {
-            answererName: answererName,
-            password: autoPassword,
-          });
+        // 4자리 비밀번호 생성 및 설정
+        const autoPassword = Math.floor(1000 + Math.random() * 9000).toString();
+        await api.post("/api/set-answerer-password", {
+          answererName: answererName,
+          password: autoPassword,
+        });
 
-          // 답변자 정보 저장
-          answererInfo.push({
-            name: answererName,
-            password: autoPassword,
-            url: `${window.location.origin}/answer/${answererName}`,
-          });
-        }
-
-        setSelectedAnswerers([]);
-        loadData();
-
-        showMessage(
-          `새 회차가 생성되었고 이전 회차가 자동으로 종료되었습니다. ${selectedAnswerers.length}명의 답변자가 설정되었습니다.`
-        );
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          showMessage(error.error || "회차 추가에 실패했습니다.", true);
-        } else {
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-        }
+        // 답변자 정보 저장
+        answererInfo.push({
+          name: answererName,
+          password: autoPassword,
+          url: `${window.location.origin}/answer/${answererName}`,
+        });
       }
+
+      setSelectedAnswerers([]);
+      loadData();
+
+      showMessage(
+        `새 회차가 생성되었고 이전 회차가 자동으로 종료되었습니다. ${selectedAnswerers.length}명의 답변자가 설정되었습니다.`
+      );
     } catch (error) {
       console.error("회차 추가 오류:", error);
       showMessage(`회차 추가에 실패했습니다: ${error.message}`, true);
@@ -348,20 +315,10 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await api.post("/api/clear-all-data");
+      await api.post("/api/clear-all-data");
 
-      if (response.ok) {
-        loadData();
-        showMessage("모든 데이터가 삭제되었습니다.");
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          showMessage(errorData.error || "데이터 삭제에 실패했습니다.", true);
-        } else {
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-        }
-      }
+      loadData();
+      showMessage("모든 데이터가 삭제되었습니다.");
     } catch (error) {
       showMessage("데이터 삭제 중 오류가 발생했습니다.", true);
     }
@@ -379,22 +336,9 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await api.post("/api/drop-foreign-keys");
+      await api.post("/api/drop-foreign-keys");
 
-      if (response.ok) {
-        showMessage("외래키 제약조건이 제거되었습니다.");
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          showMessage(
-            errorData.error || "외래키 제약조건 제거에 실패했습니다.",
-            true
-          );
-        } else {
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-        }
-      }
+      showMessage("외래키 제약조건이 제거되었습니다.");
     } catch (error) {
       showMessage("외래키 제약조건 제거 중 오류가 발생했습니다.", true);
     }
@@ -435,30 +379,11 @@ const AdminPage = () => {
 
     setLoadingQA(true);
     try {
-      const response = await fetch(
-        `${API_BASE}/api/qa-data/${selectedRoundForQA}/${selectedAnswererForQA}`,
-        { cache: "no-cache" }
-      );
-
-      if (response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("JSON 응답이 아닙니다:", contentType);
-          return;
-        }
-        const data = await response.json();
-        setQaData(data.qaData || []);
-        if (data.qaData && data.qaData.length === 0) {
-          showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
-        }
-      } else {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const error = await response.json();
-          showMessage(error.error || "질문과 답변 조회에 실패했습니다.", true);
-        } else {
-          showMessage("서버 응답 오류가 발생했습니다.", true);
-        }
+      const data = await api.get(`/api/qa-data/${selectedRoundForQA}/${selectedAnswererForQA}`);
+      
+      setQaData(data.qaData || []);
+      if (data.qaData && data.qaData.length === 0) {
+        showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
       }
     } catch (error) {
       console.error("질문과 답변 조회 오류:", error);
