@@ -1,14 +1,5 @@
 // 질문을 서버의 텍스트 파일로 저장하는 유틸리티 함수들
-
-// 개발 환경인지 확인하는 함수
-const isDevelopment = () => {
-  return import.meta.env.DEV;
-};
-
-// API 서버 URL (개발 환경에서는 Express 서버 사용)
-const getApiUrl = () => {
-  return isDevelopment() ? "http://localhost:3001" : "";
-};
+import { api } from "./api";
 
 export const saveQuestionToFile = async (questionData) => {
   try {
@@ -41,20 +32,7 @@ const saveQuestionToLocalStorage = (questionData) => {
 // API를 통해 저장하는 함수
 const saveQuestionToAPI = async (questionData) => {
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/api/save-question`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(questionData),
-    });
-
-    if (!response.ok) {
-      throw new Error("질문 저장에 실패했습니다.");
-    }
-
-    const result = await response.json();
+    const result = await api.post("/api/save-question", questionData);
     console.log("질문 저장 성공:", result.message);
     return true;
   } catch (error) {
@@ -93,14 +71,7 @@ const loadQuestionsFromLocalStorage = () => {
 // API에서 질문을 불러오는 함수
 const loadQuestionsFromAPI = async () => {
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/api/get-questions`);
-
-    if (!response.ok) {
-      throw new Error("질문 불러오기에 실패했습니다.");
-    }
-
-    const result = await response.json();
+    const result = await api.get("/api/get-questions");
     return result.questions || [];
   } catch (error) {
     console.error("API 불러오기 중 오류:", error);
@@ -153,14 +124,7 @@ const parseQuestionsFromText = (text) => {
 // 모든 질문을 텍스트 파일로 다운로드하는 함수
 export const downloadAllQuestions = async () => {
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/api/get-questions`);
-
-    if (!response.ok) {
-      throw new Error("질문 불러오기에 실패했습니다.");
-    }
-
-    const result = await response.json();
+    const result = await api.get("/api/get-questions");
     const content = result.rawText || "아직 저장된 질문이 없습니다.";
 
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -180,16 +144,7 @@ export const downloadAllQuestions = async () => {
 // 서버의 질문 저장소 초기화
 export const clearQuestionStorage = async () => {
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/api/clear-questions`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      throw new Error("질문 삭제에 실패했습니다.");
-    }
-
-    const result = await response.json();
+    const result = await api.delete("/api/clear-questions");
     console.log("질문 삭제 성공:", result.message);
     return true;
   } catch (error) {

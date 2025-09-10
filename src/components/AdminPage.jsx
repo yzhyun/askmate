@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
-const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+import { api } from "../utils/api";
 
 const AdminPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -46,51 +44,26 @@ const AdminPage = () => {
       );
 
       try {
-        const questionsRes = await fetch(
-          `${API_BASE}/api/rounds/${round.id}/questions`,
-          { cache: "no-cache" }
-        );
-        const answersRes = await fetch(
-          `${API_BASE}/api/rounds/${round.id}/answers`,
-          { cache: "no-cache" }
-        );
+        const [questions, answers] = await Promise.all([
+          api.get(`/api/rounds/${round.id}/questions`),
+          api.get(`/api/rounds/${round.id}/answers`),
+        ]);
 
-        if (questionsRes.ok && answersRes.ok) {
-          const questionsContentType = questionsRes.headers.get("content-type");
-          const answersContentType = answersRes.headers.get("content-type");
-          
-          if (!questionsContentType || !questionsContentType.includes("application/json") ||
-              !answersContentType || !answersContentType.includes("application/json")) {
-            console.error("JSON 응답이 아닙니다:", questionsContentType, answersContentType);
-            return;
-          }
-          
-          const questions = await questionsRes.json();
-          const answers = await answersRes.json();
+        const questionList = questions.questions || [];
+        const answerList = answers.answers || [];
 
-          const questionList = questions.questions || [];
-          const answerList = answers.answers || [];
-
-          roundTargets.forEach((target) => {
-            const questionCount = questionList.filter(
-              (q) => q.target === target.name
-            ).length;
-            const answerCount = answerList.filter(
-              (a) => a.answerer === target.name
-            ).length;
-            answererStats[round.id][target.name] = {
-              questions: questionCount,
-              answers: answerCount,
-            };
-          });
-        } else {
-          roundTargets.forEach((target) => {
-            answererStats[round.id][target.name] = {
-              questions: 0,
-              answers: 0,
-            };
-          });
-        }
+        roundTargets.forEach((target) => {
+          const questionCount = questionList.filter(
+            (q) => q.target === target.name
+          ).length;
+          const answerCount = answerList.filter(
+            (a) => a.answerer === target.name
+          ).length;
+          answererStats[round.id][target.name] = {
+            questions: questionCount,
+            answers: answerCount,
+          };
+        });
       } catch (error) {
         console.error(`회차 ${round.id} 통계 조회 오류:`, error);
         roundTargets.forEach((target) => {
@@ -123,11 +96,7 @@ const AdminPage = () => {
     setMessage("");
 
     try {
-      const response = await fetch(`${API_BASE}/api/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: adminPassword }),
-      });
+      const response = await api.post("/api/admin/login", { password: adminPassword });
 
       if (response.ok) {
         setIsAuthenticated(true);
@@ -152,68 +121,21 @@ const AdminPage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [membersRes, targetsRes, passwordsRes, roundsRes, currentRoundRes] =
+      const [membersData, targetsData, passwordsData, roundsData, currentRoundData] =
         await Promise.all([
-          fetch(`${API_BASE}/api/get-members`, { cache: "no-cache" }),
-          fetch(`${API_BASE}/api/get-targets`, { cache: "no-cache" }),
-          fetch(`${API_BASE}/api/get-answerer-passwords`, {
-            cache: "no-cache",
-          }),
-          fetch(`${API_BASE}/api/rounds`, { cache: "no-cache" }),
-          fetch(`${API_BASE}/api/rounds/current`, { cache: "no-cache" }),
+          api.get("/api/get-members"),
+          api.get("/api/get-targets"),
+          api.get("/api/get-answerer-passwords"),
+          api.get("/api/rounds"),
+          api.get("/api/rounds/current"),
         ]);
 
-      // 먼저 기본 데이터들을 로드
-      let membersData = [];
-      let targetsData = [];
-      let passwordsData = [];
-      let roundsData = [];
-      let currentRoundData = null;
-
-      if (membersRes.ok) {
-        const contentType = membersRes.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await membersRes.json();
-          membersData = data.members || [];
-          setMembers(membersData);
-        }
-      }
-
-      if (targetsRes.ok) {
-        const contentType = targetsRes.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await targetsRes.json();
-          targetsData = data.targets || [];
-          setTargets(targetsData);
-        }
-      }
-
-      if (passwordsRes.ok) {
-        const contentType = passwordsRes.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await passwordsRes.json();
-          passwordsData = data.passwords || [];
-          setAnswererPasswords(passwordsData);
-        }
-      }
-
-      if (roundsRes.ok) {
-        const contentType = roundsRes.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await roundsRes.json();
-          roundsData = data.rounds || [];
-          setRounds(roundsData);
-        }
-      }
-
-      if (currentRoundRes.ok) {
-        const contentType = currentRoundRes.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await currentRoundRes.json();
-          currentRoundData = data.round;
-          setCurrentRound(currentRoundData);
-        }
-      }
+      // 데이터 설정
+      setMembers(membersData.members || []);
+      setTargets(targetsData.targets || []);
+      setAnswererPasswords(passwordsData.passwords || []);
+      setRounds(roundsData.rounds || []);
+      setCurrentRound(currentRoundData.round);
 
       // 통계 데이터는 기본 데이터 로드 후 별도로 로드
       setTimeout(() => {
@@ -246,11 +168,7 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/add-member`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newMemberName.trim() }),
-      });
+      const response = await api.post("/api/add-member", { name: newMemberName.trim() });
 
       if (response.ok) {
         setNewMemberName("");
@@ -274,11 +192,7 @@ const AdminPage = () => {
     if (!confirm("이 멤버를 비활성화하시겠습니까?")) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/deactivate-member`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId }),
-      });
+      const response = await api.post("/api/deactivate-member", { memberId });
 
       if (response.ok) {
         loadData();
@@ -294,11 +208,7 @@ const AdminPage = () => {
   // 답변자 링크 생성
   const generateAnswerUrl = async (answererName) => {
     try {
-      const response = await fetch(`${API_BASE}/api/generate-answer-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answererName }),
-      });
+      const response = await api.post("/api/generate-answer-url", { answererName });
 
       if (response.ok) {
         const contentType = response.headers.get("content-type");
@@ -321,9 +231,7 @@ const AdminPage = () => {
   // 질문하지 않은 멤버 조회
   const getUnaskedMembers = async (answererName) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/api/unasked-members/${answererName}`
-      );
+      const response = await api.get(`/api/unasked-members/${answererName}`);
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         console.error("JSON 응답이 아닙니다:", contentType);
@@ -373,13 +281,9 @@ const AdminPage = () => {
         today.getMonth() + 1
       }월 ${today.getDate()}일 회차`;
 
-      const response = await fetch(`${API_BASE}/api/rounds`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: roundTitle,
-          description: `생성일: ${today.toLocaleDateString()}`,
-        }),
+      const response = await api.post("/api/rounds", {
+        title: roundTitle,
+        description: `생성일: ${today.toLocaleDateString()}`,
       });
 
       if (response.ok) {
@@ -396,23 +300,15 @@ const AdminPage = () => {
         const answererInfo = [];
         for (const answererName of selectedAnswerers) {
           // 답변자 추가
-          await fetch(`${API_BASE}/api/add-target`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: answererName }),
-          });
+          await api.post("/api/add-target", { name: answererName });
 
           // 4자리 비밀번호 생성 및 설정
           const autoPassword = Math.floor(
             1000 + Math.random() * 9000
           ).toString();
-          await fetch(`${API_BASE}/api/set-answerer-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              answererName: answererName,
-              password: autoPassword,
-            }),
+          await api.post("/api/set-answerer-password", {
+            answererName: answererName,
+            password: autoPassword,
           });
 
           // 답변자 정보 저장
@@ -461,10 +357,7 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/clear-all-data`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await api.post("/api/clear-all-data");
 
       if (response.ok) {
         loadData();
@@ -495,10 +388,7 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/drop-foreign-keys`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await api.post("/api/drop-foreign-keys");
 
       if (response.ok) {
         showMessage("외래키 제약조건이 제거되었습니다.");

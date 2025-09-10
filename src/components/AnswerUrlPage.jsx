@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-
-// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
-const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+import { api } from "../utils/api";
 
 function AnswerUrlPage() {
   const { answererName } = useParams();
@@ -21,22 +19,7 @@ function AnswerUrlPage() {
   useEffect(() => {
     const loadCurrentRound = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE}/api/rounds/current`
-        );
-        
-        if (!response.ok) {
-          console.error("API 호출 실패:", response.status);
-          return;
-        }
-        
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("JSON 응답이 아닙니다:", contentType);
-          return;
-        }
-        
-        const data = await response.json();
+        const data = await api.get("/api/rounds/current");
         if (data.success && data.round) {
           setCurrentRoundId(data.round.id);
         }
@@ -58,10 +41,7 @@ function AnswerUrlPage() {
     setAuthError("");
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/answer/${answererName}/${password}`
-      );
-      const data = await response.json();
+      const data = await api.get(`/api/answer/${answererName}/${password}`);
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -106,22 +86,11 @@ function AnswerUrlPage() {
     setSavingQuestions((prev) => new Set([...prev, questionId]));
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/answer/${answererName}/${password}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            questionId: questionId,
-            answer: answerText,
-            roundId: currentRoundId, // 미리 가져온 회차 ID 사용
-          }),
-        }
-      );
-
-      const data = await response.json();
+      const data = await api.post(`/api/answer/${answererName}/${password}`, {
+        questionId: questionId,
+        answer: answerText,
+        roundId: currentRoundId, // 미리 가져온 회차 ID 사용
+      });
 
       if (data.success) {
         setAnswers((prev) => ({ ...prev, [questionId]: data.answer }));

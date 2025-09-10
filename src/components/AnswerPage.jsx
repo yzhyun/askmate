@@ -35,7 +35,7 @@ function AnswerPage() {
           return;
         }
         
-        const roundData = await roundResponse.json();
+        const roundData = await api.get("/api/rounds/current");
 
         if (!roundData.success || !roundData.round) {
           setQuestions([]);
