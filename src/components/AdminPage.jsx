@@ -298,24 +298,6 @@ const AdminPage = () => {
     }
   };
 
-  const dropForeignKeys = async () => {
-    if (
-      !window.confirm(
-        "외래키 제약조건을 제거하시겠습니까?\n\n" +
-          "이 작업은 데이터베이스 구조를 변경합니다.\n" +
-          "삭제 작업이 더 자유로워집니다."
-      )
-    ) {
-      return;
-    }
-
-    try {
-      // 외래키 제거 기능은 일단 비활성화 (나중에 필요시 구현)
-      showMessage("외래키 제거 기능은 현재 비활성화되어 있습니다.");
-    } catch (error) {
-      showMessage("외래키 제약조건 제거 중 오류가 발생했습니다.", true);
-    }
-  };
 
   // 답변자 선택 관리
   const addAnswerer = async () => {
@@ -352,9 +334,14 @@ const AdminPage = () => {
 
     setLoadingQA(true);
     try {
-      // QA 데이터 조회 기능은 일단 비활성화 (나중에 필요시 구현)
-      setQaData([]);
-      showMessage("질문과 답변 조회 기능은 현재 비활성화되어 있습니다.");
+      const data = await api.get(
+        `/api/data?type=qa&roundId=${selectedRoundForQA}&answererName=${encodeURIComponent(selectedAnswererForQA)}`
+      );
+
+      setQaData(data.qaData || []);
+      if (data.qaData && data.qaData.length === 0) {
+        showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
+      }
     } catch (error) {
       console.error("질문과 답변 조회 오류:", error);
       showMessage("질문과 답변 조회 중 오류가 발생했습니다.", true);
@@ -630,7 +617,7 @@ const AdminPage = () => {
                                 <span className="answerer-stats">
                                   {stats.answers}/{stats.questions}
                                 </span>
-                                {passwordInfo && (
+                                {passwordInfo && round.is_active && (
                                   <span className="answerer-password">
                                     패스워드: {passwordInfo.password}
                                   </span>

@@ -32,6 +32,43 @@ export default async function handler(req, res) {
           success: true,
           answers: result.rows,
         });
+      } else if (type === "qa") {
+        // 특정 회차와 답변자의 QA 데이터 조회
+        const { roundId, answererName } = req.query;
+        
+        if (!roundId || !answererName) {
+          return res.status(400).json({ error: "회차 ID와 답변자 이름이 필요합니다." });
+        }
+
+        const [questionsResult, answersResult] = await Promise.all([
+          sql`
+            SELECT id, author, target, question, created_at
+            FROM questions
+            WHERE round_id = ${roundId} AND target = ${answererName}
+            ORDER BY created_at DESC
+          `,
+          sql`
+            SELECT a.id, a.question_id, a.answerer, a.answer, a.created_at, q.author, q.target, q.question
+            FROM answers a
+            JOIN questions q ON a.question_id = q.id
+            WHERE q.round_id = ${roundId} AND a.answerer = ${answererName}
+            ORDER BY a.created_at DESC
+          `
+        ]);
+
+        // 질문과 답변을 매칭하여 QA 데이터 생성
+        const qaData = questionsResult.rows.map(question => {
+          const answer = answersResult.rows.find(a => a.question_id === question.id);
+          return {
+            question: question,
+            answer: answer || null
+          };
+        });
+
+        res.status(200).json({
+          success: true,
+          qaData: qaData,
+        });
       } else {
         // 둘 다 반환
         const [questions, answersResult] = await Promise.all([
