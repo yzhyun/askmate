@@ -32,9 +32,10 @@ const AdminPage = () => {
 
   // API 기본 URL
 
-  // 답변자 통계 로드 함수 (간소화)
+  // 답변자 통계 로드 함수 (간소화 - targets API에서 통계 정보를 가져옴)
   const loadAnswererStats = async (roundsData, targetsData) => {
     const answererStats = {};
+    
     for (const round of roundsData) {
       answererStats[round.id] = {};
 
@@ -43,11 +44,11 @@ const AdminPage = () => {
         (target) => target.round_id === round.id
       );
 
-      // 통계는 일단 0으로 초기화 (나중에 필요시 구현)
+      // targets API에서 이미 통계 정보를 가져왔으므로 직접 사용
       roundTargets.forEach((target) => {
         answererStats[round.id][target.name] = {
-          questions: 0,
-          answers: 0,
+          questions: target.questionCount || 0,
+          answers: target.answerCount || 0,
         };
       });
     }
@@ -98,7 +99,7 @@ const AdminPage = () => {
         currentRoundData,
       ] = await Promise.all([
         api.get("/api/members"),
-        api.get("/api/targets"),
+        api.get("/api/targets?includeStats=true"),
         api.get("/api/answerer-passwords"),
         api.get("/api/rounds"),
         api.get("/api/rounds/current"),
@@ -182,30 +183,36 @@ const AdminPage = () => {
     }
   };
 
-  // 질문하지 않은 멤버 조회 (간소화)
+  // 질문하지 않은 멤버 조회
   const getUnaskedMembers = async (answererName) => {
     try {
-      // 멤버 데이터를 다시 로드하여 최신 상태 확인
-      const membersData = await api.get("/api/members");
-      const activeMembers = (membersData.members || []).filter((member) => member.is_active);
-      
-      setUnaskedMembers((prev) => ({
-        ...prev,
-        [answererName]: activeMembers.map((m) => m.name),
-      }));
+      const data = await api.get(`/api/answerer-auth?action=unasked-members&answererName=${encodeURIComponent(answererName)}`);
 
-      if (activeMembers.length > 0) {
-        showMessage(
-          `${answererName}님에게 질문 가능한 멤버: ${activeMembers
-            .map((m) => m.name)
-            .join(", ")}`
-        );
+      if (data.success) {
+        setUnaskedMembers((prev) => ({
+          ...prev,
+          [answererName]: data.unaskedMembers,
+        }));
+
+        if (data.unaskedMembers.length > 0) {
+          // 5명씩 줄바꿈하여 표시
+          const chunks = [];
+          for (let i = 0; i < data.unaskedMembers.length; i += 5) {
+            chunks.push(data.unaskedMembers.slice(i, i + 5).join(" "));
+          }
+          showModalMessage(
+            `${answererName}님에게 질문하지 않은 멤버`,
+            chunks.join("\n")
+          );
+        } else {
+          showMessage(`${answererName}님에게 모든 멤버가 질문했습니다!`);
+        }
       } else {
-        showMessage("활성 멤버가 없습니다.");
+        showMessage("질문하지 않은 멤버 조회에 실패했습니다.", true);
       }
     } catch (error) {
-      console.error("멤버 조회 오류:", error);
-      showMessage("멤버 조회에 실패했습니다.", true);
+      console.error("질문하지 않은 멤버 조회 오류:", error);
+      showMessage("질문하지 않은 멤버 조회에 실패했습니다.", true);
     }
   };
 

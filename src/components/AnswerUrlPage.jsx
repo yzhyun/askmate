@@ -41,8 +41,8 @@ function AnswerUrlPage() {
     setAuthError("");
 
     try {
-      // 답변자 인증을 위한 API 호출 (일단 비활성화)
-      const data = { success: false, error: "답변자 인증 기능은 현재 비활성화되어 있습니다." };
+      // 답변자 인증을 위한 API 호출
+      const data = await api.get(`/api/answerer-auth?answererName=${encodeURIComponent(answererName)}&password=${encodeURIComponent(password)}`);
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -87,8 +87,14 @@ function AnswerUrlPage() {
     setSavingQuestions((prev) => new Set([...prev, questionId]));
 
     try {
-      // 답변 저장 API 호출 (일단 비활성화)
-      const data = { success: false, error: "답변 저장 기능은 현재 비활성화되어 있습니다." };
+      // 답변 저장 API 호출
+      const data = await api.post("/api/answerer-auth", {
+        answererName: answererName,
+        password: password,
+        questionId: questionId,
+        answer: answerText,
+        roundId: currentRoundId,
+      });
 
       if (data.success) {
         setAnswers((prev) => ({ ...prev, [questionId]: data.answer }));

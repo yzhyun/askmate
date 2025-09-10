@@ -3,10 +3,49 @@ import { getAllTargets } from "../src/utils/database.js";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    // 타겟 목록 조회
+    // 타겟 목록 조회 (통계 정보 포함)
     try {
+      const { includeStats } = req.query;
       const targets = await getAllTargets();
-      res.status(200).json({ success: true, targets: targets });
+      
+      if (includeStats === "true") {
+        // 통계 정보 포함하여 반환
+        const targetsWithStats = await Promise.all(
+          targets.map(async (target) => {
+            try {
+              // 해당 답변자에게 온 질문 수
+              const questionsResult = await sql`
+                SELECT COUNT(*) as count FROM questions 
+                WHERE target = ${target.name} AND round_id = ${target.round_id}
+              `;
+              
+              // 해당 답변자의 답변 수
+              const answersResult = await sql`
+                SELECT COUNT(*) as count FROM answers a
+                JOIN questions q ON a.question_id = q.id
+                WHERE a.answerer = ${target.name} AND q.round_id = ${target.round_id}
+              `;
+              
+              return {
+                ...target,
+                questionCount: parseInt(questionsResult.rows[0].count),
+                answerCount: parseInt(answersResult.rows[0].count),
+              };
+            } catch (error) {
+              console.error(`타겟 ${target.name} 통계 조회 오류:`, error);
+              return {
+                ...target,
+                questionCount: 0,
+                answerCount: 0,
+              };
+            }
+          })
+        );
+        
+        res.status(200).json({ success: true, targets: targetsWithStats });
+      } else {
+        res.status(200).json({ success: true, targets: targets });
+      }
     } catch (error) {
       console.error("대상자 조회 중 오류:", error);
       res.status(500).json({ error: "서버 오류가 발생했습니다." });
