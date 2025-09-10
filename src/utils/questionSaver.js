@@ -71,7 +71,7 @@ const loadQuestionsFromLocalStorage = () => {
 // API에서 질문을 불러오는 함수
 const loadQuestionsFromAPI = async () => {
   try {
-    const result = await api.get("/api/get-data?type=questions");
+    const result = await api.get("/api/data?type=questions");
     return result.questions || [];
   } catch (error) {
     console.error("API 불러오기 중 오류:", error);
@@ -124,7 +124,7 @@ const parseQuestionsFromText = (text) => {
 // 모든 질문을 텍스트 파일로 다운로드하는 함수
 export const downloadAllQuestions = async () => {
   try {
-    const result = await api.get("/api/get-data?type=questions");
+    const result = await api.get("/api/data?type=questions");
     const content = result.rawText || "아직 저장된 질문이 없습니다.";
 
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -144,8 +144,7 @@ export const downloadAllQuestions = async () => {
 // 서버의 질문 저장소 초기화
 export const clearQuestionStorage = async () => {
   try {
-    // 질문 삭제 기능은 일단 비활성화 (나중에 필요시 구현)
-    const result = { message: "질문 삭제 기능은 현재 비활성화되어 있습니다." };
+    const result = await api.delete("/api/data?type=questions");
     console.log("질문 삭제 성공:", result.message);
     return true;
   } catch (error) {

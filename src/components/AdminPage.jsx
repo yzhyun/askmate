@@ -35,7 +35,7 @@ const AdminPage = () => {
   // 답변자 통계 로드 함수 (간소화 - targets API에서 통계 정보를 가져옴)
   const loadAnswererStats = async (roundsData, targetsData) => {
     const answererStats = {};
-    
+
     for (const round of roundsData) {
       answererStats[round.id] = {};
 
@@ -74,9 +74,7 @@ const AdminPage = () => {
     setMessage("");
 
     try {
-      await api.post("/api/admin/login", {
-        password: adminPassword,
-      });
+      await api.get(`/api/admin?password=${encodeURIComponent(adminPassword)}`);
 
       setIsAuthenticated(true);
       localStorage.setItem("adminAuthenticated", "true");
@@ -102,7 +100,7 @@ const AdminPage = () => {
         api.get("/api/targets?includeStats=true"),
         api.get("/api/answerer-passwords"),
         api.get("/api/rounds"),
-        api.get("/api/rounds/current"),
+        api.get("/api/rounds?type=current"),
       ]);
 
       // 데이터 설정
@@ -186,7 +184,11 @@ const AdminPage = () => {
   // 질문하지 않은 멤버 조회
   const getUnaskedMembers = async (answererName) => {
     try {
-      const data = await api.get(`/api/answerer-auth?action=unasked-members&answererName=${encodeURIComponent(answererName)}`);
+      const data = await api.get(
+        `/api/answerer-auth?action=unasked-members&answererName=${encodeURIComponent(
+          answererName
+        )}`
+      );
 
       if (data.success) {
         setUnaskedMembers((prev) => ({
@@ -288,8 +290,9 @@ const AdminPage = () => {
     }
 
     try {
-      // 데이터 삭제 기능은 일단 비활성화 (나중에 필요시 구현)
-      showMessage("데이터 삭제 기능은 현재 비활성화되어 있습니다.");
+      await api.delete("/api/data");
+      loadData();
+      showMessage("모든 데이터가 삭제되었습니다.");
     } catch (error) {
       showMessage("데이터 삭제 중 오류가 발생했습니다.", true);
     }

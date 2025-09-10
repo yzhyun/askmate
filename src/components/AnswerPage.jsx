@@ -35,7 +35,7 @@ function AnswerPage() {
           return;
         }
         
-        const roundData = await api.get("/api/rounds/current");
+        const roundData = await api.get("/api/rounds?type=current");
 
         if (!roundData.success || !roundData.round) {
           setQuestions([]);
@@ -48,7 +48,7 @@ function AnswerPage() {
         const [serverQuestions, targetsData, answersData] = await Promise.all([
           loadQuestionsFromServer(),
           api.get("/api/targets"),
-          api.get("/api/get-data?type=answers"),
+          api.get("/api/data?type=answers"),
         ]);
 
         console.log("AnswerPage - 로드된 질문들:", serverQuestions);
@@ -113,7 +113,7 @@ function AnswerPage() {
     if (!question) return;
 
     try {
-      const result = await api.post("/api/save", {
+      const result = await api.post("/api/data", {
         type: "answer",
         questionId: questionId,
         answerer: "익명",
@@ -228,7 +228,7 @@ function AnswerPage() {
     }
 
     try {
-      const result = await api.post("/api/save", {
+      const result = await api.post("/api/data", {
         type: "answer",
         questionId: questionId,
         answerer: "익명",

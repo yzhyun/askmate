@@ -3,16 +3,43 @@ import { sql } from "@vercel/postgres";
 export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
-      const rounds = await sql`
-        SELECT id, round_number, title, description, is_active, created_at 
-        FROM rounds 
-        ORDER BY created_at DESC
-      `;
+      const { type } = req.query;
 
-      res.status(200).json({
-        success: true,
-        rounds: rounds.rows,
-      });
+      if (type === "current") {
+        // 현재 활성 회차 조회 (기존 /api/rounds/current)
+        const currentRound = await sql`
+          SELECT id, round_number, title, description, is_active, created_at 
+          FROM rounds 
+          WHERE is_active = true 
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `;
+
+        if (currentRound.rows.length === 0) {
+          return res.status(200).json({
+            success: true,
+            round: null,
+            message: "활성 회차가 없습니다.",
+          });
+        }
+
+        res.status(200).json({
+          success: true,
+          round: currentRound.rows[0],
+        });
+      } else {
+        // 모든 회차 조회
+        const rounds = await sql`
+          SELECT id, round_number, title, description, is_active, created_at 
+          FROM rounds 
+          ORDER BY created_at DESC
+        `;
+
+        res.status(200).json({
+          success: true,
+          rounds: rounds.rows,
+        });
+      }
     } catch (error) {
       console.error("회차 조회 오류:", error);
       res
