@@ -123,8 +123,15 @@ const AdminPage = () => {
         localStorage.setItem("adminAuthenticated", "true");
         loadData();
       } else {
-        const errorData = await response.json();
-        setMessage(errorData.error || "인증에 실패했습니다.");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          setMessage(errorData.error || "인증에 실패했습니다.");
+        } else {
+          setMessage("서버 응답 오류가 발생했습니다.");
+        }
       }
     } catch (error) {
       setMessage("서버 연결에 실패했습니다.");
@@ -155,33 +162,48 @@ const AdminPage = () => {
       let currentRoundData = null;
 
       if (membersRes.ok) {
-        const data = await membersRes.json();
-        membersData = data.members || [];
-        setMembers(membersData);
+        const contentType = membersRes.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await membersRes.json();
+          membersData = data.members || [];
+          setMembers(membersData);
+        }
       }
 
       if (targetsRes.ok) {
-        const data = await targetsRes.json();
-        targetsData = data.targets || [];
-        setTargets(targetsData);
+        const contentType = targetsRes.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await targetsRes.json();
+          targetsData = data.targets || [];
+          setTargets(targetsData);
+        }
       }
 
       if (passwordsRes.ok) {
-        const data = await passwordsRes.json();
-        passwordsData = data.passwords || [];
-        setAnswererPasswords(passwordsData);
+        const contentType = passwordsRes.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await passwordsRes.json();
+          passwordsData = data.passwords || [];
+          setAnswererPasswords(passwordsData);
+        }
       }
 
       if (roundsRes.ok) {
-        const data = await roundsRes.json();
-        roundsData = data.rounds || [];
-        setRounds(roundsData);
+        const contentType = roundsRes.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await roundsRes.json();
+          roundsData = data.rounds || [];
+          setRounds(roundsData);
+        }
       }
 
       if (currentRoundRes.ok) {
-        const data = await currentRoundRes.json();
-        currentRoundData = data.round;
-        setCurrentRound(currentRoundData);
+        const contentType = currentRoundRes.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await currentRoundRes.json();
+          currentRoundData = data.round;
+          setCurrentRound(currentRoundData);
+        }
       }
 
       // 통계 데이터는 기본 데이터 로드 후 별도로 로드
@@ -226,8 +248,13 @@ const AdminPage = () => {
         loadData();
         showMessage("멤버가 추가되었습니다.");
       } else {
-        const error = await response.json();
-        showMessage(error.error || "멤버 추가에 실패했습니다.", true);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          showMessage(error.error || "멤버 추가에 실패했습니다.", true);
+        } else {
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+        }
       }
     } catch (error) {
       showMessage("멤버 추가에 실패했습니다.", true);
@@ -265,7 +292,12 @@ const AdminPage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("JSON 응답이 아닙니다:", contentType);
+        return;
+      }
+      const data = await response.json();
         const url = `${window.location.origin}/answer/${answererName}`;
         navigator.clipboard.writeText(url);
         showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
@@ -283,6 +315,11 @@ const AdminPage = () => {
       const response = await fetch(
         `${API_BASE}/api/unasked-members/${answererName}`
       );
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("JSON 응답이 아닙니다:", contentType);
+        return;
+      }
       const data = await response.json();
 
       if (data.success) {
@@ -413,7 +450,9 @@ const AdminPage = () => {
         loadData();
         showMessage("모든 데이터가 삭제되었습니다.");
       } else {
-        const errorData = await response.json();
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
         showMessage(errorData.error || "데이터 삭제에 실패했습니다.", true);
       }
     } catch (error) {
@@ -441,7 +480,9 @@ const AdminPage = () => {
       if (response.ok) {
         showMessage("외래키 제약조건이 제거되었습니다.");
       } else {
-        const errorData = await response.json();
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
         showMessage(
           errorData.error || "외래키 제약조건 제거에 실패했습니다.",
           true
@@ -493,7 +534,12 @@ const AdminPage = () => {
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("JSON 응답이 아닙니다:", contentType);
+        return;
+      }
+      const data = await response.json();
         setQaData(data.qaData || []);
         if (data.qaData && data.qaData.length === 0) {
           showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");

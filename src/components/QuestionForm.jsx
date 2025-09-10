@@ -26,14 +26,18 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
         // 응답이 JSON인지 확인
         const targetsContentType = targetsResponse.headers.get("content-type");
         const membersContentType = membersResponse.headers.get("content-type");
-        
-        if (!targetsContentType || !targetsContentType.includes("application/json") ||
-            !membersContentType || !membersContentType.includes("application/json")) {
+
+        if (
+          !targetsContentType ||
+          !targetsContentType.includes("application/json") ||
+          !membersContentType ||
+          !membersContentType.includes("application/json")
+        ) {
           console.error("JSON 응답이 아닙니다");
           setError("데이터를 불러오는데 실패했습니다.");
           return;
         }
-        
+
         const targetsData = await targetsResponse.json();
         const membersData = await membersResponse.json();
 
