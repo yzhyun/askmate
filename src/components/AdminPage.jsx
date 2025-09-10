@@ -120,9 +120,9 @@ const AdminPage = () => {
         roundsData,
         currentRoundData,
       ] = await Promise.all([
-        api.get("/api/get-members"),
-        api.get("/api/get-targets"),
-        api.get("/api/get-answerer-passwords"),
+        api.get("/api/members"),
+        api.get("/api/targets"),
+        api.get("/api/answerer-passwords"),
         api.get("/api/rounds"),
         api.get("/api/rounds/current"),
       ]);
@@ -165,7 +165,7 @@ const AdminPage = () => {
     }
 
     try {
-      await api.post("/api/add-member", {
+      await api.post("/api/members", {
         name: newMemberName.trim(),
       });
 
@@ -181,7 +181,7 @@ const AdminPage = () => {
     if (!confirm("이 멤버를 비활성화하시겠습니까?")) return;
 
     try {
-      await api.post("/api/deactivate-member", { memberId });
+      await api.put("/api/members", { memberId });
 
       loadData();
       showMessage("멤버가 비활성화되었습니다.");
@@ -269,11 +269,11 @@ const AdminPage = () => {
       const answererInfo = [];
       for (const answererName of selectedAnswerers) {
         // 답변자 추가
-        await api.post("/api/add-target", { name: answererName });
+        await api.post("/api/targets", { name: answererName });
 
         // 4자리 비밀번호 생성 및 설정
         const autoPassword = Math.floor(1000 + Math.random() * 9000).toString();
-        await api.post("/api/set-answerer-password", {
+        await api.post("/api/answerer-passwords", {
           answererName: answererName,
           password: autoPassword,
         });
@@ -379,8 +379,10 @@ const AdminPage = () => {
 
     setLoadingQA(true);
     try {
-      const data = await api.get(`/api/qa-data/${selectedRoundForQA}/${selectedAnswererForQA}`);
-      
+      const data = await api.get(
+        `/api/qa-data/${selectedRoundForQA}/${selectedAnswererForQA}`
+      );
+
       setQaData(data.qaData || []);
       if (data.qaData && data.qaData.length === 0) {
         showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
