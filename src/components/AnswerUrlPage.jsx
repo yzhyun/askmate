@@ -21,6 +21,18 @@ function AnswerUrlPage() {
         const response = await fetch(
           "/api/rounds/current"
         );
+        
+        if (!response.ok) {
+          console.error("API 호출 실패:", response.status);
+          return;
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.error("JSON 응답이 아닙니다:", contentType);
+          return;
+        }
+        
         const data = await response.json();
         if (data.success && data.round) {
           setCurrentRoundId(data.round.id);

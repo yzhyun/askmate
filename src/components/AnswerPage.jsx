@@ -18,6 +18,22 @@ function AnswerPage() {
         const roundResponse = await fetch(
           "/api/rounds/current"
         );
+        
+        if (!roundResponse.ok) {
+          console.error("API 호출 실패:", roundResponse.status);
+          setQuestions([]);
+          setAvailableTargets([]);
+          return;
+        }
+        
+        const contentType = roundResponse.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.error("JSON 응답이 아닙니다:", contentType);
+          setQuestions([]);
+          setAvailableTargets([]);
+          return;
+        }
+        
         const roundData = await roundResponse.json();
 
         if (!roundData.success || !roundData.round) {
