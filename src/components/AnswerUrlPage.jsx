@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
+// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
+const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+
 function AnswerUrlPage() {
   const { answererName } = useParams();
   const [questions, setQuestions] = useState([]);
@@ -19,7 +22,7 @@ function AnswerUrlPage() {
     const loadCurrentRound = async () => {
       try {
         const response = await fetch(
-          "/api/rounds/current"
+          `${API_BASE}/api/rounds/current`
         );
         
         if (!response.ok) {
@@ -56,7 +59,7 @@ function AnswerUrlPage() {
 
     try {
       const response = await fetch(
-        `/api/answer/${answererName}/${password}`
+        `${API_BASE}/api/answer/${answererName}/${password}`
       );
       const data = await response.json();
 
@@ -104,7 +107,7 @@ function AnswerUrlPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/answer/${answererName}/${password}`,
+        `${API_BASE}/api/answer/${answererName}/${password}`,
         {
           method: "POST",
           headers: {

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
+const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+
 const AdminPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
@@ -30,7 +33,6 @@ const AdminPage = () => {
   const [loadingQA, setLoadingQA] = useState(false);
 
   // API 기본 URL
-  const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
 
   // 답변자 통계 로드 함수
   const loadAnswererStats = async (roundsData, targetsData) => {

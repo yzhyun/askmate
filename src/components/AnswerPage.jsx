@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { loadQuestionsFromServer } from "../utils/questionSaver";
 
+// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
+const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+
 function AnswerPage() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +50,8 @@ function AnswerPage() {
         const [questionsResponse, targetsResponse, answersResponse] =
           await Promise.all([
             loadQuestionsFromServer(),
-            fetch("/api/get-targets"),
-            fetch("/api/get-answers"),
+            fetch(`${API_BASE}/api/get-targets`),
+            fetch(`${API_BASE}/api/get-answers`),
           ]);
 
         const serverQuestions = questionsResponse;
@@ -117,7 +120,7 @@ function AnswerPage() {
     if (!question) return;
 
     try {
-      const response = await fetch("/api/save-answer", {
+      const response = await fetch(`${API_BASE}/api/save-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -243,7 +246,7 @@ function AnswerPage() {
     }
 
     try {
-      const response = await fetch("/api/save-answer", {
+      const response = await fetch(`${API_BASE}/api/save-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
