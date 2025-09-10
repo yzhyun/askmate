@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-
-// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
-const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+import { api } from "../utils/api";
 
 function QuestionForm({ onAddQuestion, onTargetChange }) {
   const [formData, setFormData] = useState({
@@ -21,28 +19,10 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
         sessionStorage.removeItem("cachedMembers");
 
         // 캐시가 없으면 API 호출
-        const [targetsResponse, membersResponse] = await Promise.all([
-          fetch(`${API_BASE}/api/get-current-active-targets`),
-          fetch(`${API_BASE}/api/get-members`),
+        const [targetsData, membersData] = await Promise.all([
+          api.get("/api/get-current-active-targets"),
+          api.get("/api/get-members"),
         ]);
-
-        // 응답이 JSON인지 확인
-        const targetsContentType = targetsResponse.headers.get("content-type");
-        const membersContentType = membersResponse.headers.get("content-type");
-
-        if (
-          !targetsContentType ||
-          !targetsContentType.includes("application/json") ||
-          !membersContentType ||
-          !membersContentType.includes("application/json")
-        ) {
-          console.error("JSON 응답이 아닙니다");
-          setError("데이터를 불러오는데 실패했습니다.");
-          return;
-        }
-
-        const targetsData = await targetsResponse.json();
-        const membersData = await membersResponse.json();
 
         if (targetsData.success) {
           const activeTargets = targetsData.targets.map((t) => t.name);

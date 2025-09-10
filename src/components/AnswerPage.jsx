@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { loadQuestionsFromServer } from "../utils/questionSaver";
-
-// API 기본 URL 설정 (로컬 개발 vs 프로덕션)
-const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+import { api } from "../utils/api";
 
 function AnswerPage() {
   const [questions, setQuestions] = useState([]);
@@ -47,16 +45,11 @@ function AnswerPage() {
         }
 
         // 질문, 대상자, 답변을 병렬로 로드
-        const [questionsResponse, targetsResponse, answersResponse] =
-          await Promise.all([
-            loadQuestionsFromServer(),
-            fetch(`${API_BASE}/api/get-targets`),
-            fetch(`${API_BASE}/api/get-answers`),
-          ]);
-
-        const serverQuestions = questionsResponse;
-        const targetsData = await targetsResponse.json();
-        const answersData = await answersResponse.json();
+        const [serverQuestions, targetsData, answersData] = await Promise.all([
+          loadQuestionsFromServer(),
+          api.get("/api/get-targets"),
+          api.get("/api/get-answers"),
+        ]);
 
         console.log("AnswerPage - 로드된 질문들:", serverQuestions);
         console.log("AnswerPage - 질문 개수:", serverQuestions.length);
@@ -120,23 +113,11 @@ function AnswerPage() {
     if (!question) return;
 
     try {
-      const response = await fetch(`${API_BASE}/api/save-answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questionId: questionId,
-          answerer: "익명",
-          answer: answerText,
-        }),
+      const result = await api.post("/api/save-answer", {
+        questionId: questionId,
+        answerer: "익명",
+        answer: answerText,
       });
-
-      if (!response.ok) {
-        throw new Error("답변 저장에 실패했습니다.");
-      }
-
-      const result = await response.json();
       console.log("답변 저장 성공:", result.message);
 
       // 답변이 완료된 질문으로 표시
@@ -246,23 +227,11 @@ function AnswerPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/save-answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          questionId: questionId,
-          answerer: "익명",
-          answer: newAnswerText,
-        }),
+      const result = await api.post("/api/save-answer", {
+        questionId: questionId,
+        answerer: "익명",
+        answer: newAnswerText,
       });
-
-      if (!response.ok) {
-        throw new Error("답변 수정에 실패했습니다.");
-      }
-
-      const result = await response.json();
       console.log("답변 수정 성공:", result.message);
 
       // 수정된 답변 내용을 상태에 저장

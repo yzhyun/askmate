@@ -56,6 +56,15 @@ const AdminPage = () => {
         );
 
         if (questionsRes.ok && answersRes.ok) {
+          const questionsContentType = questionsRes.headers.get("content-type");
+          const answersContentType = answersRes.headers.get("content-type");
+          
+          if (!questionsContentType || !questionsContentType.includes("application/json") ||
+              !answersContentType || !answersContentType.includes("application/json")) {
+            console.error("JSON 응답이 아닙니다:", questionsContentType, answersContentType);
+            return;
+          }
+          
           const questions = await questionsRes.json();
           const answers = await answersRes.json();
 
@@ -374,6 +383,12 @@ const AdminPage = () => {
       });
 
       if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          console.error("JSON 응답이 아닙니다:", contentType);
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+          return;
+        }
         const roundData = await response.json();
         const newRoundId = roundData.round.id;
 
@@ -415,8 +430,13 @@ const AdminPage = () => {
           `새 회차가 생성되었고 이전 회차가 자동으로 종료되었습니다. ${selectedAnswerers.length}명의 답변자가 설정되었습니다.`
         );
       } else {
-        const error = await response.json();
-        showMessage(error.error || "회차 추가에 실패했습니다.", true);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          showMessage(error.error || "회차 추가에 실패했습니다.", true);
+        } else {
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+        }
       }
     } catch (error) {
       console.error("회차 추가 오류:", error);
@@ -551,8 +571,13 @@ const AdminPage = () => {
           showMessage("해당 회차와 답변자에 대한 질문과 답변이 없습니다.");
         }
       } else {
-        const error = await response.json();
-        showMessage(error.error || "질문과 답변 조회에 실패했습니다.", true);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          showMessage(error.error || "질문과 답변 조회에 실패했습니다.", true);
+        } else {
+          showMessage("서버 응답 오류가 발생했습니다.", true);
+        }
       }
     } catch (error) {
       console.error("질문과 답변 조회 오류:", error);
