@@ -315,28 +315,7 @@ const AdminPage = () => {
     }
   };
 
-  // 회차 삭제
-  const deleteRound = async (roundId) => {
-    try {
-      setLoading(true);
-
-      // 로컬 개발 환경에서는 DELETE /api/rounds/:id 사용
-      if (import.meta.env.DEV) {
-        await api.delete(`/api/rounds/${roundId}`);
-      } else {
-        // Vercel에서는 DELETE /api/admin?action=rounds&id=:id 사용
-        await api.delete(`/api/admin?action=rounds&id=${roundId}`);
-      }
-
-      showMessage("회차가 삭제되었습니다.");
-      loadData(); // 데이터 다시 로드
-    } catch (error) {
-      console.error("회차 삭제 오류:", error);
-      showMessage(`회차 삭제에 실패했습니다: ${error.message}`, true);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 회차 삭제 기능 제거됨
 
   const clearAllData = async () => {
     if (
@@ -658,21 +637,6 @@ const AdminPage = () => {
                         {round.is_active && (
                           <span className="active-badge">현재 활성</span>
                         )}
-                        <button
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                `정말로 ${round.round_number}회차를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없으며, 해당 회차의 모든 질문과 답변이 함께 삭제됩니다.`
-                              )
-                            ) {
-                              deleteRound(round.id);
-                            }
-                          }}
-                          className="btn-delete-round"
-                          title="회차 삭제"
-                        >
-                          🗑️
-                        </button>
                       </div>
                     </div>
 

@@ -1597,39 +1597,7 @@ app.post("/api/admin", async (req, res) => {
   }
 });
 
-app.delete("/api/admin", async (req, res) => {
-  try {
-    const { action } = req.query;
-
-    // 회차 삭제
-    if (action === "rounds") {
-      const { id } = req.query;
-      if (id) {
-        // 특정 회차 삭제
-        await sql`DELETE FROM rounds WHERE id = ${id}`;
-        res.json({ success: true, message: "회차가 삭제되었습니다." });
-      } else {
-        // 모든 회차 삭제
-        await sql`DELETE FROM rounds CASCADE`;
-        res.json({ success: true, message: "모든 회차가 삭제되었습니다." });
-      }
-    }
-    // 모든 데이터 삭제
-    else if (action === "clear-data") {
-      await sql`DELETE FROM answers`;
-      await sql`DELETE FROM questions`;
-      await sql`DELETE FROM targets`;
-      await sql`DELETE FROM answerer_passwords`;
-      await sql`DELETE FROM rounds`;
-      res.json({ success: true, message: "모든 데이터가 삭제되었습니다." });
-    } else {
-      res.status(400).json({ error: "지원하지 않는 액션입니다." });
-    }
-  } catch (error) {
-    console.error("관리자 API 오류:", error);
-    res.status(500).json({ error: "서버 오류가 발생했습니다." });
-  }
-});
+// 회차 삭제 기능 제거됨
 
 export default app;
 
