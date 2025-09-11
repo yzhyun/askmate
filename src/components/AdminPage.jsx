@@ -168,48 +168,53 @@ const AdminPage = () => {
     }
   };
 
-  // 답변자 링크 생성
-  const generateAnswerUrl = async (answererName) => {
-    try {
-      const data = await api.post("/api/admin?action=generate-url", {
-        answererName,
-      });
+  // 답변자 링크 복사
+  const copyAnswerUrl = (answererName) => {
+    const url = `${window.location.origin}/answer/${answererName}`;
 
-      const url = `${window.location.origin}/answer/${answererName}`;
-      
-      // 클립보드 API 사용 시 오류 처리
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(url);
-          showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
-        } else {
-          // 클립보드 API를 사용할 수 없는 경우 대체 방법 사용
-          const textArea = document.createElement('textarea');
-          textArea.value = url;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          
-          try {
-            document.execCommand('copy');
+    // 클립보드 API 사용 시 오류 처리
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard
+          .writeText(url)
+          .then(() => {
             showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
-          } catch (err) {
-            console.error('클립보드 복사 실패:', err);
-            showMessage(`링크 복사에 실패했습니다. 수동으로 복사해주세요: ${url}`, true);
-          } finally {
-            document.body.removeChild(textArea);
-          }
-        }
-      } catch (clipboardError) {
-        console.error('클립보드 API 오류:', clipboardError);
-        showMessage(`링크 복사에 실패했습니다. 수동으로 복사해주세요: ${url}`, true);
+          })
+          .catch((clipboardError) => {
+            console.error("클립보드 API 오류:", clipboardError);
+            fallbackCopyToClipboard(url);
+          });
+      } else {
+        fallbackCopyToClipboard(url);
       }
     } catch (error) {
-      console.error('링크 생성 오류:', error);
-      showMessage("링크 생성에 실패했습니다.", true);
+      console.error("클립보드 복사 오류:", error);
+      fallbackCopyToClipboard(url);
+    }
+  };
+
+  // 대체 복사 방법
+  const fallbackCopyToClipboard = (url) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = url;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand("copy");
+      showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
+    } catch (err) {
+      console.error("클립보드 복사 실패:", err);
+      showMessage(
+        `링크 복사에 실패했습니다. 수동으로 복사해주세요: ${url}`,
+        true
+      );
+    } finally {
+      document.body.removeChild(textArea);
     }
   };
 
@@ -704,7 +709,7 @@ const AdminPage = () => {
                                 )}
                                 <span className="answer-link">{answerUrl}</span>
                                 <button
-                                  onClick={() => generateAnswerUrl(target.name)}
+                                  onClick={() => copyAnswerUrl(target.name)}
                                   className="copy-link-btn"
                                 >
                                   복사

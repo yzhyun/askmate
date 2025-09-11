@@ -1,40 +1,8 @@
 // API 기본 URL 설정 (로컬 개발 vs 프로덕션)
 export const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
 
-// 환경별 API 엔드포인트 매핑
-const getApiEndpoint = (endpoint) => {
-  // 로컬에서는 Express 서버의 기존 엔드포인트 사용
-  if (import.meta.env.DEV) {
-    // 로컬 개발 환경에서는 기존 server.js의 엔드포인트 사용
-    if (endpoint.includes("/api/admin?action=login")) {
-      // 로컬에서는 GET 방식으로 호출하되, password를 쿼리 파라미터로 전달
-      return endpoint; // 원본 엔드포인트 그대로 사용
-    }
-    if (endpoint.includes("/api/admin?action=rounds")) {
-      return "/api/rounds";
-    }
-    if (endpoint.includes("/api/admin?action=members")) {
-      return "/api/members";
-    }
-    if (endpoint.includes("/api/admin?action=targets")) {
-      return "/api/targets";
-    }
-    // POST 요청 매핑
-    if (endpoint.includes("/api/admin?action=rounds")) {
-      return "/api/rounds";
-    }
-    if (endpoint.includes("/api/admin?action=members")) {
-      return "/api/members";
-    }
-    if (endpoint.includes("/api/admin?action=targets")) {
-      return "/api/targets";
-    }
-    if (endpoint.includes("/api/admin?action=passwords")) {
-      return "/api/answerer-password";
-    }
-  }
-  return endpoint;
-};
+// 모든 환경에서 동일한 API 엔드포인트 사용
+// 로컬과 배포 환경 모두 Vercel 스타일의 통합 API 사용
 
 // 안전한 JSON 파싱 함수
 export async function safeJsonParse(response) {
@@ -77,8 +45,7 @@ export const api = {
   // GET 요청
   async get(endpoint) {
     try {
-      const mappedEndpoint = getApiEndpoint(endpoint);
-      const response = await fetch(`${API_BASE}${mappedEndpoint}`);
+      const response = await fetch(`${API_BASE}${endpoint}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -92,8 +59,7 @@ export const api = {
   // POST 요청
   async post(endpoint, data) {
     try {
-      const mappedEndpoint = getApiEndpoint(endpoint);
-      const response = await fetch(`${API_BASE}${mappedEndpoint}`, {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

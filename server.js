@@ -1218,27 +1218,178 @@ app.get("/api/answerer-password", async (req, res) => {
   }
 });
 
-// Vercel에서는 export default를 사용
-// 통합 관리자 API (Vercel 호환)
+// 답변자 인증 및 질문/답변 조회 API
+app.get("/api/answer", async (req, res) => {
+  try {
+    const { action, answererName, password } = req.query;
+
+    if (action === "auth") {
+      if (!answererName || !password) {
+        return res
+          .status(400)
+          .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+      }
+
+      // 답변자 비밀번호 확인
+      console.log("답변자 인증 시도 (GET):", { answererName, password });
+      
+      const passwordResult = await sql`
+        SELECT password FROM answerer_passwords 
+        WHERE answerer_name = ${answererName}
+      `;
+
+      console.log("데이터베이스 조회 결과 (GET):", passwordResult.rows);
+
+      if (passwordResult.rows.length === 0) {
+        console.log("답변자를 찾을 수 없음 (GET):", answererName);
+        return res.status(404).json({ error: "답변자를 찾을 수 없습니다." });
+      }
+
+      const storedPassword = passwordResult.rows[0].password;
+      console.log("저장된 비밀번호 (GET):", storedPassword, "입력된 비밀번호:", password);
+      
+      if (password !== storedPassword) {
+        console.log("비밀번호 불일치 (GET)");
+        return res
+          .status(401)
+          .json({ error: "비밀번호가 올바르지 않습니다." });
+      }
+
+      // 현재 활성 회차 조회
+      const currentRound = await sql`
+        SELECT id FROM rounds WHERE is_active = true ORDER BY created_at DESC LIMIT 1
+      `;
+
+      if (currentRound.rows.length === 0) {
+        return res.status(200).json({
+          success: true,
+          questions: [],
+          answers: [],
+          message: "활성 회차가 없습니다.",
+        });
+      }
+
+      const roundId = currentRound.rows[0].id;
+
+      // 해당 답변자에게 온 질문들 조회
+      const questionsResult = await sql`
+        SELECT id, author, target, question, created_at
+        FROM questions
+        WHERE target = ${answererName} AND round_id = ${roundId}
+        ORDER BY created_at DESC
+      `;
+
+      // 해당 답변자의 답변들 조회
+      const answersResult = await sql`
+        SELECT id, question_id, answerer, answer, created_at
+        FROM answers
+        WHERE answerer = ${answererName} AND round_id = ${roundId}
+        ORDER BY created_at DESC
+      `;
+
+      res.status(200).json({
+        success: true,
+        questions: questionsResult.rows,
+        answers: answersResult.rows,
+      });
+    } else {
+      res.status(400).json({ error: "지원하지 않는 액션입니다." });
+    }
+  } catch (error) {
+    console.error("답변자 인증 오류:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
+});
+
+// 답변 저장 API
+app.post("/api/answer", async (req, res) => {
+  try {
+    const { action, answererName, password, questionId, answer, roundId } = req.body;
+
+    if (action === "auth") {
+      if (!answererName || !password || !questionId || !answer || !roundId) {
+        return res
+          .status(400)
+          .json({ error: "필수 필드가 누락되었습니다." });
+      }
+
+      // 답변자 비밀번호 확인
+      const passwordResult = await sql`
+        SELECT password FROM answerer_passwords 
+        WHERE answerer_name = ${answererName}
+      `;
+
+      if (passwordResult.rows.length === 0) {
+        return res.status(404).json({ error: "답변자를 찾을 수 없습니다." });
+      }
+
+      const storedPassword = passwordResult.rows[0].password;
+      if (password !== storedPassword) {
+        return res
+          .status(401)
+          .json({ error: "비밀번호가 올바르지 않습니다." });
+      }
+
+      // 답변 저장
+      const result = await sql`
+        INSERT INTO answers (question_id, answerer, answer, round_id)
+        VALUES (${questionId}, ${answererName}, ${answer}, ${roundId})
+        ON CONFLICT (question_id, answerer, round_id) 
+        DO UPDATE SET answer = ${answer}, created_at = NOW()
+        RETURNING id, question_id, answerer, answer, round_id, created_at
+      `;
+
+      res.status(200).json({
+        success: true,
+        message: "답변이 저장되었습니다.",
+        answer: result.rows[0],
+      });
+    } else {
+      res.status(400).json({ error: "지원하지 않는 액션입니다." });
+    }
+  } catch (error) {
+    console.error("답변 저장 오류:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
+});
+
+// 통합 관리자 API (Vercel과 동일한 구조)
 app.get("/api/admin", async (req, res) => {
   try {
-    const { action, password } = req.query;
+    const { action } = req.query;
 
+    // 관리자 인증
     if (action === "login") {
+      const { password } = req.query;
+
       if (!password) {
         return res.status(400).json({ error: "비밀번호를 입력해주세요." });
       }
 
-      const isValid = await verifyAdminPassword(password);
-      if (isValid) {
-        res.json({ success: true, message: "인증 성공" });
+      // 관리자 비밀번호 확인
+      const result = await sql`
+        SELECT password FROM admin_auth WHERE id = 1
+      `;
+
+      if (result.rows.length === 0) {
+        return res
+          .status(401)
+          .json({ error: "관리자 비밀번호가 설정되지 않았습니다." });
+      }
+
+      const storedPassword = result.rows[0].password;
+
+      if (password === storedPassword) {
+        res.status(200).json({
+          success: true,
+          message: "관리자 인증 성공",
+        });
       } else {
         res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
       }
-      return;
     }
-
-    if (action === "rounds") {
+    // 회차 관리
+    else if (action === "rounds") {
       const { type } = req.query;
       if (type === "current") {
         const currentRound = await getCurrentActiveRound();
@@ -1247,16 +1398,111 @@ app.get("/api/admin", async (req, res) => {
         const rounds = await getAllRounds();
         res.json({ success: true, rounds });
       }
-    } else if (action === "passwords") {
-      // 답변자 비밀번호 조회는 별도 구현 필요
-      res.json({ success: true, passwords: [] });
-    } else if (action === "members") {
+    }
+    // 멤버 관리
+    else if (action === "members") {
       const members = await getAllMembers();
       res.json({ success: true, members });
-    } else if (action === "targets") {
-      const targets = await getAllTargets();
-      res.json({ success: true, targets });
-    } else {
+    }
+    // 타겟 관리
+    else if (action === "targets") {
+      const { includeStats } = req.query;
+      if (includeStats === "true") {
+        // 통계 정보 포함하여 타겟 조회
+        const targets = await getAllTargets();
+        const targetsWithStats = await Promise.all(
+          targets.map(async (target) => {
+            const questionCount = await sql`
+              SELECT COUNT(*) as count FROM questions 
+              WHERE target = ${target.name} AND round_id = ${target.round_id}
+            `;
+            const answerCount = await sql`
+              SELECT COUNT(*) as count FROM answers 
+              WHERE answerer = ${target.name} AND round_id = ${target.round_id}
+            `;
+            return {
+              ...target,
+              questionCount: parseInt(questionCount.rows[0].count),
+              answerCount: parseInt(answerCount.rows[0].count),
+            };
+          })
+        );
+        res.json({ success: true, targets: targetsWithStats });
+      } else {
+        const targets = await getAllTargets();
+        res.json({ success: true, targets });
+      }
+    }
+    // 답변자 비밀번호 관리
+    else if (action === "passwords") {
+      const passwords = await sql`
+        SELECT answerer_name, password, created_at 
+        FROM answerer_passwords 
+        ORDER BY created_at DESC
+      `;
+      res.json({ success: true, passwords: passwords.rows });
+    }
+    // 질문하지 않은 멤버 조회
+    else if (action === "unasked-members") {
+      const { answererName } = req.query;
+      if (!answererName) {
+        return res.status(400).json({ error: "답변자 이름이 필요합니다." });
+      }
+
+      // 현재 활성 회차 조회
+      const currentRound = await sql`
+        SELECT id FROM rounds WHERE is_active = true ORDER BY created_at DESC LIMIT 1
+      `;
+
+      if (currentRound.rows.length === 0) {
+        return res.status(200).json({ success: true, unaskedMembers: [] });
+      }
+
+      const roundId = currentRound.rows[0].id;
+
+      // 모든 활성 멤버 조회
+      const allMembers = await sql`
+        SELECT name FROM members WHERE is_active = true
+      `;
+
+      // 해당 답변자에게 질문한 멤버들 조회
+      const askedMembers = await sql`
+        SELECT DISTINCT author FROM questions 
+        WHERE target = ${answererName} AND round_id = ${roundId}
+      `;
+
+      const askedMemberNames = askedMembers.rows.map(row => row.author);
+      const unaskedMembers = allMembers.rows
+        .map(row => row.name)
+        .filter(name => !askedMemberNames.includes(name));
+
+      res.json({ success: true, unaskedMembers });
+    }
+    // 질문과 답변 조회
+    else if (action === "qa") {
+      const { roundId, answererName } = req.query;
+      if (!roundId || !answererName) {
+        return res.status(400).json({ error: "회차 ID와 답변자 이름이 필요합니다." });
+      }
+
+      const qaData = await sql`
+        SELECT 
+          q.id as question_id,
+          q.question,
+          q.author,
+          q.target,
+          q.created_at as question_created_at,
+          a.answer,
+          a.created_at as answer_created_at
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id AND a.answerer = ${answererName} AND a.round_id = ${roundId}
+        WHERE q.target = ${answererName} AND q.round_id = ${roundId}
+        ORDER BY q.created_at ASC
+      `;
+
+      res.json({ success: true, qaData: qaData.rows });
+    }
+    else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
   } catch (error) {
@@ -1269,11 +1515,117 @@ app.post("/api/admin", async (req, res) => {
   try {
     const { action } = req.query;
 
+    // 회차 생성
     if (action === "rounds") {
       const { title, description } = req.body;
-      const newRound = await addRound(title, description);
-      res.json({ success: true, round: newRound });
-    } else {
+      
+      // 기존 활성 회차를 비활성화
+      await sql`UPDATE rounds SET is_active = false WHERE is_active = true`;
+      
+      // 새 회차 생성
+      const result = await sql`
+        INSERT INTO rounds (title, description, is_active)
+        VALUES (${title}, ${description}, true)
+        RETURNING id, title, description, is_active, created_at
+      `;
+
+      const newRound = result.rows[0];
+      
+      // 회차 번호 설정
+      const roundCount = await sql`SELECT COUNT(*) as count FROM rounds`;
+      const roundNumber = parseInt(roundCount.rows[0].count);
+      
+      await sql`
+        UPDATE rounds 
+        SET round_number = ${roundNumber} 
+        WHERE id = ${newRound.id}
+      `;
+
+      res.json({ success: true, round: { ...newRound, round_number: roundNumber } });
+    }
+    // 멤버 추가
+    else if (action === "members") {
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ error: "멤버 이름이 필요합니다." });
+      }
+
+      const result = await sql`
+        INSERT INTO members (name, is_active)
+        VALUES (${name}, true)
+        RETURNING id, name, is_active, created_at
+      `;
+
+      res.json({ success: true, member: result.rows[0] });
+    }
+    // 타겟 추가
+    else if (action === "targets") {
+      const { name, roundId } = req.body;
+      if (!name || !roundId) {
+        return res.status(400).json({ error: "이름과 회차 ID가 필요합니다." });
+      }
+
+      const result = await sql`
+        INSERT INTO targets (name, round_id)
+        VALUES (${name}, ${roundId})
+        RETURNING id, name, round_id, created_at
+      `;
+
+      res.json({ success: true, target: result.rows[0] });
+    }
+    // 답변자 비밀번호 설정
+    else if (action === "passwords") {
+      const { answererName, password } = req.body;
+      if (!answererName || !password) {
+        return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+      }
+
+      const result = await sql`
+        INSERT INTO answerer_passwords (answerer_name, password)
+        VALUES (${answererName}, ${password})
+        ON CONFLICT (answerer_name)
+        DO UPDATE SET password = EXCLUDED.password, created_at = NOW()
+        RETURNING answerer_name, password, created_at
+      `;
+
+      res.json({ success: true, password: result.rows[0] });
+    }
+    else {
+      res.status(400).json({ error: "지원하지 않는 액션입니다." });
+    }
+  } catch (error) {
+    console.error("관리자 API 오류:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
+});
+
+app.delete("/api/admin", async (req, res) => {
+  try {
+    const { action } = req.query;
+
+    // 회차 삭제
+    if (action === "rounds") {
+      const { id } = req.query;
+      if (id) {
+        // 특정 회차 삭제
+        await sql`DELETE FROM rounds WHERE id = ${id} CASCADE`;
+        res.json({ success: true, message: "회차가 삭제되었습니다." });
+      } else {
+        // 모든 회차 삭제
+        await sql`DELETE FROM rounds CASCADE`;
+        res.json({ success: true, message: "모든 회차가 삭제되었습니다." });
+      }
+    }
+    // 모든 데이터 삭제
+    else if (action === "clear-data") {
+      await sql`DELETE FROM answers`;
+      await sql`DELETE FROM questions`;
+      await sql`DELETE FROM targets`;
+      await sql`DELETE FROM answerer_passwords`;
+      await sql`DELETE FROM rounds`;
+      res.json({ success: true, message: "모든 데이터가 삭제되었습니다." });
+    }
+    else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
   } catch (error) {
