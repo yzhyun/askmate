@@ -1232,7 +1232,7 @@ app.get("/api/answer", async (req, res) => {
 
       // 답변자 비밀번호 확인
       console.log("답변자 인증 시도 (GET):", { answererName, password });
-      
+
       const passwordResult = await sql`
         SELECT password FROM answerer_passwords 
         WHERE answerer_name = ${answererName}
@@ -1246,13 +1246,16 @@ app.get("/api/answer", async (req, res) => {
       }
 
       const storedPassword = passwordResult.rows[0].password;
-      console.log("저장된 비밀번호 (GET):", storedPassword, "입력된 비밀번호:", password);
-      
+      console.log(
+        "저장된 비밀번호 (GET):",
+        storedPassword,
+        "입력된 비밀번호:",
+        password
+      );
+
       if (password !== storedPassword) {
         console.log("비밀번호 불일치 (GET)");
-        return res
-          .status(401)
-          .json({ error: "비밀번호가 올바르지 않습니다." });
+        return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
       }
 
       // 현재 활성 회차 조회
@@ -1304,13 +1307,12 @@ app.get("/api/answer", async (req, res) => {
 // 답변 저장 API
 app.post("/api/answer", async (req, res) => {
   try {
-    const { action, answererName, password, questionId, answer, roundId } = req.body;
+    const { action, answererName, password, questionId, answer, roundId } =
+      req.body;
 
     if (action === "auth") {
       if (!answererName || !password || !questionId || !answer || !roundId) {
-        return res
-          .status(400)
-          .json({ error: "필수 필드가 누락되었습니다." });
+        return res.status(400).json({ error: "필수 필드가 누락되었습니다." });
       }
 
       // 답변자 비밀번호 확인
@@ -1325,9 +1327,7 @@ app.post("/api/answer", async (req, res) => {
 
       const storedPassword = passwordResult.rows[0].password;
       if (password !== storedPassword) {
-        return res
-          .status(401)
-          .json({ error: "비밀번호가 올바르지 않습니다." });
+        return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
       }
 
       // 답변 저장
@@ -1471,10 +1471,10 @@ app.get("/api/admin", async (req, res) => {
         WHERE target = ${answererName} AND round_id = ${roundId}
       `;
 
-      const askedMemberNames = askedMembers.rows.map(row => row.author);
+      const askedMemberNames = askedMembers.rows.map((row) => row.author);
       const unaskedMembers = allMembers.rows
-        .map(row => row.name)
-        .filter(name => !askedMemberNames.includes(name));
+        .map((row) => row.name)
+        .filter((name) => !askedMemberNames.includes(name));
 
       res.json({ success: true, unaskedMembers });
     }
@@ -1482,7 +1482,9 @@ app.get("/api/admin", async (req, res) => {
     else if (action === "qa") {
       const { roundId, answererName } = req.query;
       if (!roundId || !answererName) {
-        return res.status(400).json({ error: "회차 ID와 답변자 이름이 필요합니다." });
+        return res
+          .status(400)
+          .json({ error: "회차 ID와 답변자 이름이 필요합니다." });
       }
 
       const qaData = await sql`
@@ -1501,8 +1503,7 @@ app.get("/api/admin", async (req, res) => {
       `;
 
       res.json({ success: true, qaData: qaData.rows });
-    }
-    else {
+    } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
   } catch (error) {
@@ -1518,30 +1519,25 @@ app.post("/api/admin", async (req, res) => {
     // 회차 생성
     if (action === "rounds") {
       const { title, description } = req.body;
-      
+
       // 기존 활성 회차를 비활성화
       await sql`UPDATE rounds SET is_active = false WHERE is_active = true`;
-      
-      // 새 회차 생성
+
+      // 회차 번호 계산 (기존 최대 회차 번호 + 1)
+      const maxRoundResult =
+        await sql`SELECT MAX(round_number) as max_round FROM rounds`;
+      const maxRound = maxRoundResult.rows[0].max_round;
+      const roundNumber = maxRound ? maxRound + 1 : 1;
+
+      // 새 회차 생성 (round_number 포함)
       const result = await sql`
-        INSERT INTO rounds (title, description, is_active)
-        VALUES (${title}, ${description}, true)
-        RETURNING id, title, description, is_active, created_at
+        INSERT INTO rounds (round_number, title, description, is_active)
+        VALUES (${roundNumber}, ${title}, ${description}, true)
+        RETURNING id, round_number, title, description, is_active, created_at
       `;
 
       const newRound = result.rows[0];
-      
-      // 회차 번호 설정
-      const roundCount = await sql`SELECT COUNT(*) as count FROM rounds`;
-      const roundNumber = parseInt(roundCount.rows[0].count);
-      
-      await sql`
-        UPDATE rounds 
-        SET round_number = ${roundNumber} 
-        WHERE id = ${newRound.id}
-      `;
-
-      res.json({ success: true, round: { ...newRound, round_number: roundNumber } });
+      res.json({ success: true, round: newRound });
     }
     // 멤버 추가
     else if (action === "members") {
@@ -1577,7 +1573,9 @@ app.post("/api/admin", async (req, res) => {
     else if (action === "passwords") {
       const { answererName, password } = req.body;
       if (!answererName || !password) {
-        return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+        return res
+          .status(400)
+          .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
       }
 
       const result = await sql`
@@ -1589,8 +1587,7 @@ app.post("/api/admin", async (req, res) => {
       `;
 
       res.json({ success: true, password: result.rows[0] });
-    }
-    else {
+    } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
   } catch (error) {
@@ -1624,8 +1621,7 @@ app.delete("/api/admin", async (req, res) => {
       await sql`DELETE FROM answerer_passwords`;
       await sql`DELETE FROM rounds`;
       res.json({ success: true, message: "모든 데이터가 삭제되었습니다." });
-    }
-    else {
+    } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
   } catch (error) {
