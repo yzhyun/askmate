@@ -1109,6 +1109,57 @@ app.get("/api/targets", async (req, res) => {
   }
 });
 
+// 회차 추가 API
+app.post("/api/rounds", async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ error: "회차 제목이 필요합니다." });
+    }
+
+    const newRound = await addRound(title, description || "");
+    res.json({ success: true, round: newRound });
+  } catch (error) {
+    console.error("회차 추가 오류:", error);
+    res.status(500).json({ error: "회차 추가에 실패했습니다." });
+  }
+});
+
+// 멤버 추가 API
+app.post("/api/members", async (req, res) => {
+  try {
+    const { name } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "멤버 이름이 필요합니다." });
+    }
+
+    await addMember(name);
+    res.json({ success: true, message: "멤버가 추가되었습니다." });
+  } catch (error) {
+    console.error("멤버 추가 오류:", error);
+    res.status(500).json({ error: "멤버 추가에 실패했습니다." });
+  }
+});
+
+// 타겟 추가 API
+app.post("/api/targets", async (req, res) => {
+  try {
+    const { name, roundId } = req.body;
+    
+    if (!name || !roundId) {
+      return res.status(400).json({ error: "타겟 이름과 회차 ID가 필요합니다." });
+    }
+
+    await addTarget(name, parseInt(roundId));
+    res.json({ success: true, message: "타겟이 추가되었습니다." });
+  } catch (error) {
+    console.error("타겟 추가 오류:", error);
+    res.status(500).json({ error: "타겟 추가에 실패했습니다." });
+  }
+});
+
 // Vercel에서는 export default를 사용
 // 통합 관리자 API (Vercel 호환)
 app.get("/api/admin", async (req, res) => {

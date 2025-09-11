@@ -19,6 +19,16 @@ const getApiEndpoint = (endpoint) => {
     if (endpoint.includes("/api/admin?action=targets")) {
       return "/api/targets";
     }
+    // POST 요청 매핑
+    if (endpoint.includes("/api/admin?action=rounds")) {
+      return "/api/rounds";
+    }
+    if (endpoint.includes("/api/admin?action=members")) {
+      return "/api/members";
+    }
+    if (endpoint.includes("/api/admin?action=targets")) {
+      return "/api/targets";
+    }
   }
   return endpoint;
 };
@@ -79,7 +89,8 @@ export const api = {
   // POST 요청
   async post(endpoint, data) {
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const mappedEndpoint = getApiEndpoint(endpoint);
+      const response = await fetch(`${API_BASE}${mappedEndpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
