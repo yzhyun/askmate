@@ -1524,10 +1524,11 @@ app.post("/api/admin", async (req, res) => {
       await sql`UPDATE rounds SET is_active = false WHERE is_active = true`;
 
       // 회차 번호 계산 (기존 최대 회차 번호 + 1)
-      const maxRoundResult =
-        await sql`SELECT MAX(round_number) as max_round FROM rounds`;
-      const maxRound = maxRoundResult.rows[0].max_round;
-      const roundNumber = maxRound ? maxRound + 1 : 1;
+      const nextRoundResult = await sql`
+        SELECT COALESCE(MAX(round_number), 0) + 1 as next_number
+        FROM rounds
+      `;
+      const roundNumber = nextRoundResult.rows[0].next_number;
 
       // 새 회차 생성 (round_number 포함)
       const result = await sql`
