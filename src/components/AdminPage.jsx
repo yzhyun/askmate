@@ -409,8 +409,8 @@ const AdminPage = () => {
 
     const qaText = qaData
       .map((qa, index) => {
-        return `Q${index + 1}. ${qa.question}\nA${index + 1}. ${
-          qa.answer || "(답변 없음)"
+        return `Q${index + 1}. ${qa.question?.question || qa.question}\nA${index + 1}. ${
+          qa.answer?.answer || qa.answer || "(답변 없음)"
         }\n`;
       })
       .join("\n");

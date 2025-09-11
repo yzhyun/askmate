@@ -449,7 +449,10 @@ app.get("/api/answer", async (req, res) => {
       });
     } else if (action === "qa") {
       const { roundId, answererName } = req.query;
+      console.log("QA 조회 요청:", { roundId, answererName });
+      
       if (!roundId || !answererName) {
+        console.log("QA 조회 오류: 필수 파라미터 누락");
         return res
           .status(400)
           .json({ error: "회차 ID와 답변자 이름이 필요합니다." });
