@@ -470,7 +470,29 @@ app.get("/api/answer", async (req, res) => {
         ORDER BY q.created_at ASC
       `;
 
-      res.json({ success: true, qaData: qaData.rows });
+      // Vercel API와 동일한 구조로 변환
+      const formattedQaData = qaData.rows.map(row => ({
+        question_id: row.question_id,
+        question: {
+          id: row.question_id,
+          author: row.author,
+          target: row.target,
+          question: row.question,
+          created_at: row.question_created_at
+        },
+        answer: row.answer ? {
+          id: row.question_id,
+          question_id: row.question_id,
+          answerer: answererName,
+          answer: row.answer,
+          created_at: row.answer_created_at,
+          author: row.author,
+          target: row.target,
+          question: row.question
+        } : null
+      }));
+
+      res.json({ success: true, qaData: formattedQaData });
     } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }

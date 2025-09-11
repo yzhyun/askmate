@@ -850,7 +850,8 @@ const AdminPage = () => {
                 {qaData.map((qa, index) => (
                   <div key={qa.question_id || index} className="qa-item">
                     <div className="question">
-                      <strong>Q{index + 1}.</strong> {qa.question?.question || qa.question}
+                      <strong>Q{index + 1}.</strong>{" "}
+                      {qa.question?.question || qa.question}
                     </div>
                     <div className="answer">
                       <strong>A{index + 1}.</strong>{" "}
