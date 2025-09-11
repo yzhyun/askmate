@@ -3,13 +3,13 @@ import { getAllTargets } from "../src/utils/database.js";
 
 export default async function handler(req, res) {
   const { action } = req.query;
-  
+
   // 데이터베이스 연결 테스트
   try {
     console.log("데이터베이스 연결 테스트 시작");
     const testQuery = await sql`SELECT 1 as test`;
     console.log("데이터베이스 연결 성공:", testQuery.rows);
-    
+
     // 테이블 존재 여부 확인
     const tablesQuery = await sql`
       SELECT table_name 
@@ -19,13 +19,12 @@ export default async function handler(req, res) {
       ORDER BY table_name
     `;
     console.log("존재하는 테이블들:", tablesQuery.rows);
-    
   } catch (dbError) {
     console.error("데이터베이스 연결 실패:", dbError);
     return res.status(500).json({
       success: false,
       error: "데이터베이스 연결에 실패했습니다.",
-      details: dbError.message
+      details: dbError.message,
     });
   }
 
@@ -386,7 +385,7 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       try {
         console.log("데이터베이스 초기화 시작");
-        
+
         // 1. rounds 테이블 생성
         await sql`
           CREATE TABLE IF NOT EXISTS rounds (
@@ -477,7 +476,7 @@ export default async function handler(req, res) {
         res.status(500).json({
           success: false,
           error: "데이터베이스 초기화에 실패했습니다.",
-          details: error.message
+          details: error.message,
         });
       }
     }

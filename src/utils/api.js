@@ -6,17 +6,18 @@ const getApiEndpoint = (endpoint) => {
   // 로컬에서는 Express 서버의 기존 엔드포인트 사용
   if (import.meta.env.DEV) {
     // 로컬 개발 환경에서는 기존 server.js의 엔드포인트 사용
-    if (endpoint.includes('/api/admin?action=login')) {
-      return '/api/admin/login';
+    if (endpoint.includes("/api/admin?action=login")) {
+      // 로컬에서는 GET 방식으로 호출하되, password를 쿼리 파라미터로 전달
+      return endpoint; // 원본 엔드포인트 그대로 사용
     }
-    if (endpoint.includes('/api/admin?action=rounds')) {
-      return '/api/rounds';
+    if (endpoint.includes("/api/admin?action=rounds")) {
+      return "/api/rounds";
     }
-    if (endpoint.includes('/api/admin?action=members')) {
-      return '/api/members';
+    if (endpoint.includes("/api/admin?action=members")) {
+      return "/api/members";
     }
-    if (endpoint.includes('/api/admin?action=targets')) {
-      return '/api/targets';
+    if (endpoint.includes("/api/admin?action=targets")) {
+      return "/api/targets";
     }
   }
   return endpoint;

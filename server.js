@@ -1116,6 +1116,10 @@ app.get("/api/admin", async (req, res) => {
     const { action, password } = req.query;
     
     if (action === "login") {
+      if (!password) {
+        return res.status(400).json({ error: "비밀번호를 입력해주세요." });
+      }
+      
       const isValid = await verifyAdminPassword(password);
       if (isValid) {
         res.json({ success: true, message: "인증 성공" });
