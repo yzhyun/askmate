@@ -194,16 +194,30 @@ export default async function handler(req, res) {
             .json({ error: "비밀번호가 올바르지 않습니다." });
         }
 
-        // 답변 저장
-        const result = await sql`
-          INSERT INTO answers (question_id, answerer, answer, round_id)
-          VALUES (${questionId}, ${answererName}, ${answer}, ${roundId})
-          ON CONFLICT (question_id, answerer)
-          DO UPDATE SET 
-            answer = EXCLUDED.answer,
-            created_at = CURRENT_TIMESTAMP
-          RETURNING id, question_id, answerer, answer, created_at
+        // 답변 저장 (기존 답변이 있으면 업데이트, 없으면 새로 생성)
+        // 먼저 기존 답변이 있는지 확인
+        const existingAnswer = await sql`
+          SELECT id FROM answers 
+          WHERE question_id = ${questionId} AND answerer = ${answererName}
         `;
+
+        let result;
+        if (existingAnswer.rows.length > 0) {
+          // 기존 답변 업데이트
+          result = await sql`
+            UPDATE answers 
+            SET answer = ${answer}, created_at = CURRENT_TIMESTAMP
+            WHERE question_id = ${questionId} AND answerer = ${answererName}
+            RETURNING id, question_id, answerer, answer, round_id, created_at
+          `;
+        } else {
+          // 새 답변 생성
+          result = await sql`
+            INSERT INTO answers (question_id, answerer, answer, round_id)
+            VALUES (${questionId}, ${answererName}, ${answer}, ${roundId})
+            RETURNING id, question_id, answerer, answer, round_id, created_at
+          `;
+        }
 
         res.status(200).json({
           success: true,

@@ -142,12 +142,17 @@ app.get("/api/admin", async (req, res) => {
     }
     // 답변자 비밀번호 관리
     else if (action === "passwords") {
-      const passwords = await sql`
-        SELECT name, password, round_id, created_at
-        FROM answerer_passwords
-        ORDER BY created_at DESC
-      `;
-      res.json({ success: true, passwords: passwords.rows });
+      try {
+        const passwords = await sql`
+          SELECT name, password, round_id, created_at
+          FROM answerer_passwords
+          ORDER BY created_at DESC
+        `;
+        res.json({ success: true, passwords: passwords.rows });
+      } catch (error) {
+        console.error("답변자 비밀번호 조회 오류:", error);
+        res.status(500).json({ error: "서버 오류가 발생했습니다." });
+      }
     }
     // 질문 안한 회원 조회
     else if (action === "unasked-members") {
@@ -375,7 +380,7 @@ app.get("/api/answer", async (req, res) => {
       // 비밀번호 검증
       const passwordResult = await sql`
         SELECT password FROM answerer_passwords 
-        WHERE name = ${answererName} AND is_active = true
+        WHERE name = ${answererName}
         ORDER BY created_at DESC LIMIT 1
       `;
 
@@ -460,7 +465,7 @@ app.post("/api/answer", async (req, res) => {
       // 비밀번호 검증
       const passwordResult = await sql`
         SELECT password FROM answerer_passwords 
-        WHERE name = ${answererName} AND is_active = true
+        WHERE name = ${answererName}
         ORDER BY created_at DESC LIMIT 1
       `;
 
@@ -474,14 +479,30 @@ app.post("/api/answer", async (req, res) => {
       const storedPassword = passwordResult.rows[0].password;
 
       if (password === storedPassword) {
-        // 답변 저장
-        const result = await sql`
-          INSERT INTO answers (question_id, answerer, answer, round_id)
-          VALUES (${questionId}, ${answererName}, ${answer}, ${roundId})
-          ON CONFLICT (question_id, answerer) 
-          DO UPDATE SET answer = ${answer}, created_at = CURRENT_TIMESTAMP
-          RETURNING id, question_id, answerer, answer, round_id, created_at
+        // 답변 저장 (기존 답변이 있으면 업데이트, 없으면 새로 생성)
+        // 먼저 기존 답변이 있는지 확인
+        const existingAnswer = await sql`
+          SELECT id FROM answers 
+          WHERE question_id = ${questionId} AND answerer = ${answererName}
         `;
+
+        let result;
+        if (existingAnswer.rows.length > 0) {
+          // 기존 답변 업데이트
+          result = await sql`
+            UPDATE answers 
+            SET answer = ${answer}, created_at = CURRENT_TIMESTAMP
+            WHERE question_id = ${questionId} AND answerer = ${answererName}
+            RETURNING id, question_id, answerer, answer, round_id, created_at
+          `;
+        } else {
+          // 새 답변 생성
+          result = await sql`
+            INSERT INTO answers (question_id, answerer, answer, round_id)
+            VALUES (${questionId}, ${answererName}, ${answer}, ${roundId})
+            RETURNING id, question_id, answerer, answer, round_id, created_at
+          `;
+        }
 
         res.status(200).json({
           success: true,
