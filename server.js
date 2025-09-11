@@ -182,7 +182,7 @@ app.get("/api/admin", async (req, res) => {
 
       // 질문 안한 회원들 필터링
       const unaskedMembers = allMembers.filter(
-        (member) => !askedMemberNames.includes(member.answerer_name)
+        (member) => !askedMemberNames.includes(member.name)
       );
 
       res.json({ success: true, unaskedMembers });
