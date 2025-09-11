@@ -378,6 +378,26 @@ export default async function handler(req, res) {
         console.error("회차 정리 오류:", error);
         res.status(500).json({ error: "회차 정리에 실패했습니다." });
       }
+    } else if (req.method === "DELETE") {
+      // 개별 회차 삭제
+      try {
+        const { id } = req.query;
+        
+        if (!id) {
+          return res.status(400).json({ error: "회차 ID가 필요합니다." });
+        }
+
+        // 회차와 관련된 모든 데이터 삭제
+        await sql`DELETE FROM rounds WHERE id = ${parseInt(id)}`;
+        
+        res.status(200).json({
+          success: true,
+          message: "회차가 삭제되었습니다.",
+        });
+      } catch (error) {
+        console.error("회차 삭제 오류:", error);
+        res.status(500).json({ error: "회차 삭제에 실패했습니다." });
+      }
     }
   }
   // 데이터베이스 초기화

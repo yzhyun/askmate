@@ -1126,6 +1126,24 @@ app.post("/api/rounds", async (req, res) => {
   }
 });
 
+// 회차 삭제 API
+app.delete("/api/rounds/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ error: "회차 ID가 필요합니다." });
+    }
+
+    // 회차와 관련된 모든 데이터 삭제 (CASCADE로 자동 삭제됨)
+    await deleteRound(parseInt(id));
+    res.json({ success: true, message: "회차가 삭제되었습니다." });
+  } catch (error) {
+    console.error("회차 삭제 오류:", error);
+    res.status(500).json({ error: "회차 삭제에 실패했습니다." });
+  }
+});
+
 // 멤버 추가 API
 app.post("/api/members", async (req, res) => {
   try {
