@@ -20,8 +20,8 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
 
         // 캐시가 없으면 API 호출
         const [targetsData, membersData] = await Promise.all([
-          api.get("/api/get-current-active-targets"),
-          api.get("/api/members"),
+          api.get("/api/admin?action=current-targets"),
+          api.get("/api/admin?action=members"),
         ]);
 
         if (targetsData.success) {

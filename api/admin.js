@@ -151,7 +151,7 @@ export default async function handler(req, res) {
       try {
         const { includeStats } = req.query;
         const targets = await getAllTargets();
-        
+
         if (includeStats === "true") {
           // 통계 정보 포함하여 반환
           const targetsWithStats = await Promise.all(
@@ -162,14 +162,14 @@ export default async function handler(req, res) {
                   SELECT COUNT(*) as count FROM questions 
                   WHERE target = ${target.name} AND round_id = ${target.round_id}
                 `;
-                
+
                 // 해당 답변자의 답변 수
                 const answersResult = await sql`
                   SELECT COUNT(*) as count FROM answers a
                   JOIN questions q ON a.question_id = q.id
                   WHERE a.answerer = ${target.name} AND q.round_id = ${target.round_id}
                 `;
-                
+
                 return {
                   ...target,
                   questionCount: parseInt(questionsResult.rows[0].count),
@@ -185,7 +185,7 @@ export default async function handler(req, res) {
               }
             })
           );
-          
+
           res.status(200).json({ success: true, targets: targetsWithStats });
         } else {
           res.status(200).json({ success: true, targets: targets });
@@ -341,12 +341,10 @@ export default async function handler(req, res) {
         });
       } catch (error) {
         console.error("답변자 비밀번호 조회 오류:", error);
-        res
-          .status(500)
-          .json({
-            success: false,
-            error: "답변자 비밀번호 조회에 실패했습니다.",
-          });
+        res.status(500).json({
+          success: false,
+          error: "답변자 비밀번호 조회에 실패했습니다.",
+        });
       }
     } else if (req.method === "POST") {
       // 답변자 비밀번호 설정
@@ -435,7 +433,7 @@ export default async function handler(req, res) {
           return res.status(200).json({
             success: true,
             unaskedMembers: [],
-            message: "활성 회차가 없습니다."
+            message: "활성 회차가 없습니다.",
           });
         }
 
@@ -452,10 +450,10 @@ export default async function handler(req, res) {
           WHERE target = ${answererName} AND round_id = ${roundId}
         `;
 
-        const askedMemberNames = askedMembers.rows.map(row => row.author);
+        const askedMemberNames = askedMembers.rows.map((row) => row.author);
         const unaskedMembers = allMembers.rows
-          .map(row => row.name)
-          .filter(name => !askedMemberNames.includes(name));
+          .map((row) => row.name)
+          .filter((name) => !askedMemberNames.includes(name));
 
         res.status(200).json({
           success: true,
@@ -524,8 +522,7 @@ export default async function handler(req, res) {
         res.status(500).json({ error: "서버 오류가 발생했습니다." });
       }
     }
-  }
-  else {
+  } else {
     res.status(400).json({ error: "Invalid action" });
   }
 }

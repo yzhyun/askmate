@@ -19,7 +19,7 @@ function AnswerUrlPage() {
   useEffect(() => {
     const loadCurrentRound = async () => {
       try {
-        const data = await api.get("/api/rounds?type=current");
+        const data = await api.get("/api/admin?action=rounds&type=current");
         if (data.success && data.round) {
           setCurrentRoundId(data.round.id);
         }
@@ -42,7 +42,7 @@ function AnswerUrlPage() {
 
     try {
       // 답변자 인증을 위한 API 호출
-      const data = await api.get(`/api/answerer-auth?answererName=${encodeURIComponent(answererName)}&password=${encodeURIComponent(password)}`);
+      const data = await api.get(`/api/answer?action=auth&answererName=${encodeURIComponent(answererName)}&password=${encodeURIComponent(password)}`);
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -88,7 +88,7 @@ function AnswerUrlPage() {
 
     try {
       // 답변 저장 API 호출
-      const data = await api.post("/api/answerer-auth", {
+      const data = await api.post("/api/answer?action=auth", {
         answererName: answererName,
         password: password,
         questionId: questionId,

@@ -74,7 +74,7 @@ const AdminPage = () => {
     setMessage("");
 
     try {
-      await api.get(`/api/admin?password=${encodeURIComponent(adminPassword)}`);
+      await api.get(`/api/admin?action=login&password=${encodeURIComponent(adminPassword)}`);
 
       setIsAuthenticated(true);
       localStorage.setItem("adminAuthenticated", "true");
@@ -96,11 +96,11 @@ const AdminPage = () => {
         roundsData,
         currentRoundData,
       ] = await Promise.all([
-        api.get("/api/members"),
-        api.get("/api/targets?includeStats=true"),
-        api.get("/api/answerer-passwords"),
-        api.get("/api/rounds"),
-        api.get("/api/rounds?type=current"),
+        api.get("/api/admin?action=members"),
+        api.get("/api/admin?action=targets&includeStats=true"),
+        api.get("/api/admin?action=passwords"),
+        api.get("/api/admin?action=rounds"),
+        api.get("/api/admin?action=rounds&type=current"),
       ]);
 
       // 데이터 설정
@@ -141,7 +141,7 @@ const AdminPage = () => {
     }
 
     try {
-      await api.post("/api/members", {
+      await api.post("/api/admin?action=members", {
         name: newMemberName.trim(),
       });
 
@@ -157,7 +157,7 @@ const AdminPage = () => {
     if (!confirm("이 멤버를 비활성화하시겠습니까?")) return;
 
     try {
-      await api.put("/api/members", { memberId });
+      await api.put("/api/admin?action=members", { memberId });
 
       loadData();
       showMessage("멤버가 비활성화되었습니다.");
@@ -169,7 +169,7 @@ const AdminPage = () => {
   // 답변자 링크 생성
   const generateAnswerUrl = async (answererName) => {
     try {
-      const data = await api.post("/api/generate-answer-url", {
+      const data = await api.post("/api/admin?action=generate-url", {
         answererName,
       });
 
@@ -185,7 +185,7 @@ const AdminPage = () => {
   const getUnaskedMembers = async (answererName) => {
     try {
       const data = await api.get(
-        `/api/answerer-auth?action=unasked-members&answererName=${encodeURIComponent(
+        `/api/admin?action=unasked-members&answererName=${encodeURIComponent(
           answererName
         )}`
       );
@@ -233,7 +233,7 @@ const AdminPage = () => {
         today.getMonth() + 1
       }월 ${today.getDate()}일 회차`;
 
-      const roundData = await api.post("/api/rounds", {
+      const roundData = await api.post("/api/admin?action=rounds", {
         title: roundTitle,
         description: `생성일: ${today.toLocaleDateString()}`,
       });
@@ -244,11 +244,11 @@ const AdminPage = () => {
       const answererInfo = [];
       for (const answererName of selectedAnswerers) {
         // 답변자 추가
-        await api.post("/api/targets", { name: answererName });
+        await api.post("/api/admin?action=targets", { name: answererName });
 
         // 4자리 비밀번호 생성 (매번 다른 비밀번호)
         const autoPassword = Math.floor(1000 + Math.random() * 9000).toString();
-        await api.post("/api/answerer-passwords", {
+        await api.post("/api/admin?action=passwords", {
           answererName: answererName,
           password: autoPassword,
         });
@@ -290,7 +290,7 @@ const AdminPage = () => {
     }
 
     try {
-      await api.delete("/api/data");
+      await api.delete("/api/admin?action=clear-data");
       loadData();
       showMessage("모든 데이터가 삭제되었습니다.");
     } catch (error) {
@@ -334,7 +334,7 @@ const AdminPage = () => {
     setLoadingQA(true);
     try {
       const data = await api.get(
-        `/api/data?type=qa&roundId=${selectedRoundForQA}&answererName=${encodeURIComponent(
+        `/api/answer?action=qa&roundId=${selectedRoundForQA}&answererName=${encodeURIComponent(
           selectedAnswererForQA
         )}`
       );
