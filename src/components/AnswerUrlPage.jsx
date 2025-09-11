@@ -103,7 +103,12 @@ function AnswerUrlPage() {
           newSet.delete(questionId);
           return newSet;
         });
+        
+        // 답변 텍스트 초기화
+        setAnswerTexts((prev) => ({ ...prev, [questionId]: "" }));
 
+        console.log("답변 저장 성공:", data.answer);
+        
         // 다음 질문으로 자동 이동
         const currentIndex = questions.findIndex((q) => q.id === questionId);
         if (currentIndex < questions.length - 1) {
