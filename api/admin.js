@@ -274,6 +274,8 @@ export default async function handler(req, res) {
             ORDER BY created_at DESC
           `;
 
+          console.log("현재 모든 회차:", rounds.rows);
+
           res.status(200).json({
             success: true,
             rounds: rounds.rows,
@@ -321,6 +323,28 @@ export default async function handler(req, res) {
       } catch (error) {
         console.error("회차 생성 오류:", error);
         res.status(500).json({ error: "회차 생성에 실패했습니다." });
+      }
+    } else if (req.method === "DELETE") {
+      // 회차 정리 (모든 회차 삭제 후 1회차부터 다시 시작)
+      try {
+        // 모든 회차 삭제
+        await sql`DELETE FROM rounds`;
+        
+        // 1회차 생성
+        const result = await sql`
+          INSERT INTO rounds (round_number, title, description, is_active, created_at)
+          VALUES (1, '1회차', '첫 번째 질문-답변 세션', true, CURRENT_TIMESTAMP)
+          RETURNING id, round_number, title, description, is_active, created_at
+        `;
+
+        res.status(200).json({
+          success: true,
+          message: "회차가 정리되었습니다. 1회차부터 다시 시작합니다.",
+          round: result.rows[0],
+        });
+      } catch (error) {
+        console.error("회차 정리 오류:", error);
+        res.status(500).json({ error: "회차 정리에 실패했습니다." });
       }
     }
   }

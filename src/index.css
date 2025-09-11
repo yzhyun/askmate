@@ -1276,10 +1276,42 @@ body {
   margin-top: 2rem;
 }
 
+.rounds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.rounds-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .rounds-count {
   color: #6c757d;
   font-size: 0.9rem;
-  margin-bottom: 1rem;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-danger:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
 }
 
 .rounds-grid {

@@ -559,8 +559,33 @@ const AdminPage = () => {
 
           {/* 회차 목록 */}
           <div className="rounds-list-section">
-            <h3>회차 목록</h3>
-            <div className="rounds-count">총 {rounds.length}개 회차</div>
+            <div className="rounds-header">
+              <h3>회차 목록</h3>
+              <div className="rounds-actions">
+                <div className="rounds-count">총 {rounds.length}개 회차</div>
+                <button
+                  onClick={async () => {
+                    if (window.confirm("⚠️ 경고: 모든 회차를 삭제하고 1회차부터 다시 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.")) {
+                      try {
+                        setLoading(true);
+                        await api.delete("/api/admin?action=rounds");
+                        showMessage("회차가 정리되었습니다. 1회차부터 다시 시작합니다.");
+                        loadData();
+                      } catch (error) {
+                        console.error("회차 정리 오류:", error);
+                        showMessage(`회차 정리에 실패했습니다: ${error.message}`, true);
+                      } finally {
+                        setLoading(false);
+                      }
+                    }
+                  }}
+                  className="btn-danger"
+                  disabled={loading}
+                >
+                  회차 정리 (1회차부터 다시 시작)
+                </button>
+              </div>
+            </div>
             <div className="rounds-grid">
               {rounds.map((round) => {
                 // 해당 회차의 답변자만 표시
