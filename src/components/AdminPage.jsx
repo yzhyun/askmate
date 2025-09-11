@@ -115,6 +115,7 @@ const AdminPage = () => {
       // 통계 데이터는 기본 데이터 로드 후 별도로 로드
       setTimeout(() => {
         loadAnswererStats(roundsData.rounds || [], targetsData.targets || []);
+        loadUnaskedMembersCounts(targetsData.targets || []);
       }, 100);
     } catch (error) {
       console.error("데이터 로드 오류:", error);
@@ -215,6 +216,34 @@ const AdminPage = () => {
       );
     } finally {
       document.body.removeChild(textArea);
+    }
+  };
+
+  // 모든 답변자에 대해 질문안함 멤버 수 미리 로드
+  const loadUnaskedMembersCounts = async (targets) => {
+    try {
+      const unaskedCounts = {};
+      
+      for (const target of targets) {
+        try {
+          const data = await api.get(
+            `/api/admin?action=unasked-members&answererName=${encodeURIComponent(
+              target.name
+            )}`
+          );
+          
+          if (data.success) {
+            unaskedCounts[target.name] = data.unaskedMembers.length;
+          }
+        } catch (error) {
+          console.error(`${target.name} 질문안함 멤버 조회 오류:`, error);
+          unaskedCounts[target.name] = 0;
+        }
+      }
+      
+      setUnaskedMembers(unaskedCounts);
+    } catch (error) {
+      console.error("질문안함 멤버 수 로드 오류:", error);
     }
   };
 
@@ -682,7 +711,7 @@ const AdminPage = () => {
                                   onClick={() => getUnaskedMembers(target.name)}
                                   className="unasked-btn"
                                 >
-                                  질문안함({members.length - stats.questions})
+                                  질문안함({unaskedMembers[target.name]?.length || 0})
                                 </button>
                               </div>
                             );
