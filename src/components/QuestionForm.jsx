@@ -25,7 +25,11 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
           api.get("/api/admin?action=rounds&type=current"),
         ]);
 
-        if (targetsData.success && currentRoundData.success && currentRoundData.round) {
+        if (
+          targetsData.success &&
+          currentRoundData.success &&
+          currentRoundData.round
+        ) {
           // 현재 활성 회차의 답변자만 표시
           const currentRoundId = currentRoundData.round.id;
           const currentRoundTargets = targetsData.targets
