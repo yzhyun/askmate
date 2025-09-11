@@ -97,17 +97,25 @@ export default async function handler(req, res) {
         }
 
         // 답변자 비밀번호 확인
+        console.log("답변자 인증 시도 (GET):", { answererName, password });
+        
         const passwordResult = await sql`
           SELECT password FROM answerer_passwords 
           WHERE answerer_name = ${answererName}
         `;
 
+        console.log("데이터베이스 조회 결과 (GET):", passwordResult.rows);
+
         if (passwordResult.rows.length === 0) {
+          console.log("답변자를 찾을 수 없음 (GET):", answererName);
           return res.status(404).json({ error: "답변자를 찾을 수 없습니다." });
         }
 
         const storedPassword = passwordResult.rows[0].password;
+        console.log("저장된 비밀번호 (GET):", storedPassword, "입력된 비밀번호:", password);
+        
         if (password !== storedPassword) {
+          console.log("비밀번호 불일치 (GET)");
           return res
             .status(401)
             .json({ error: "비밀번호가 올바르지 않습니다." });
