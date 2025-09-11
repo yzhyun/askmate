@@ -1178,6 +1178,24 @@ app.post("/api/targets", async (req, res) => {
   }
 });
 
+// 답변자 비밀번호 설정 API
+app.post("/api/answerer-password", async (req, res) => {
+  try {
+    const { answererName, password } = req.body;
+
+    if (!answererName || !password) {
+      return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+    }
+
+    await setAnswererPassword(answererName, password);
+
+    res.json({ success: true, message: "답변자 비밀번호가 설정되었습니다." });
+  } catch (error) {
+    console.error("답변자 비밀번호 설정 오류:", error);
+    res.status(500).json({ error: "답변자 비밀번호 설정에 실패했습니다." });
+  }
+});
+
 // Vercel에서는 export default를 사용
 // 통합 관리자 API (Vercel 호환)
 app.get("/api/admin", async (req, res) => {

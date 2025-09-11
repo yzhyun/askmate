@@ -281,7 +281,7 @@ const AdminPage = () => {
   const deleteRound = async (roundId) => {
     try {
       setLoading(true);
-      
+
       // 로컬 개발 환경에서는 DELETE /api/rounds/:id 사용
       if (import.meta.env.DEV) {
         await api.delete(`/api/rounds/${roundId}`);
@@ -652,7 +652,11 @@ const AdminPage = () => {
                         )}
                         <button
                           onClick={() => {
-                            if (window.confirm(`정말로 ${round.round_number}회차를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없으며, 해당 회차의 모든 질문과 답변이 함께 삭제됩니다.`)) {
+                            if (
+                              window.confirm(
+                                `정말로 ${round.round_number}회차를 삭제하시겠습니까?\n\n⚠️ 이 작업은 되돌릴 수 없으며, 해당 회차의 모든 질문과 답변이 함께 삭제됩니다.`
+                              )
+                            ) {
                               deleteRound(round.id);
                             }
                           }}

@@ -29,6 +29,9 @@ const getApiEndpoint = (endpoint) => {
     if (endpoint.includes("/api/admin?action=targets")) {
       return "/api/targets";
     }
+    if (endpoint.includes("/api/admin?action=passwords")) {
+      return "/api/answerer-password";
+    }
   }
   return endpoint;
 };
