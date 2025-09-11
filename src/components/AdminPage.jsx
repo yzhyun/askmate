@@ -176,9 +176,39 @@ const AdminPage = () => {
       });
 
       const url = `${window.location.origin}/answer/${answererName}`;
-      navigator.clipboard.writeText(url);
-      showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
+      
+      // 클립보드 API 사용 시 오류 처리
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(url);
+          showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
+        } else {
+          // 클립보드 API를 사용할 수 없는 경우 대체 방법 사용
+          const textArea = document.createElement('textarea');
+          textArea.value = url;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          try {
+            document.execCommand('copy');
+            showMessage(`링크가 클립보드에 복사되었습니다: ${url}`);
+          } catch (err) {
+            console.error('클립보드 복사 실패:', err);
+            showMessage(`링크 복사에 실패했습니다. 수동으로 복사해주세요: ${url}`, true);
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        }
+      } catch (clipboardError) {
+        console.error('클립보드 API 오류:', clipboardError);
+        showMessage(`링크 복사에 실패했습니다. 수동으로 복사해주세요: ${url}`, true);
+      }
     } catch (error) {
+      console.error('링크 생성 오류:', error);
       showMessage("링크 생성에 실패했습니다.", true);
     }
   };
@@ -246,9 +276,9 @@ const AdminPage = () => {
       const answererInfo = [];
       for (const answererName of selectedAnswerers) {
         // 답변자를 타겟으로 추가 (roundId 포함)
-        await api.post("/api/admin?action=targets", { 
-          name: answererName, 
-          roundId: newRoundId 
+        await api.post("/api/admin?action=targets", {
+          name: answererName,
+          roundId: newRoundId,
         });
 
         // 4자리 비밀번호 생성 (매번 다른 비밀번호)
@@ -591,36 +621,6 @@ const AdminPage = () => {
               <h3>회차 목록</h3>
               <div className="rounds-actions">
                 <div className="rounds-count">총 {rounds.length}개 회차</div>
-                <button
-                  onClick={async () => {
-                    if (
-                      window.confirm(
-                        "⚠️ 경고: 모든 회차를 삭제하고 1회차부터 다시 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다."
-                      )
-                    ) {
-                      try {
-                        setLoading(true);
-                        await api.delete("/api/admin?action=rounds");
-                        showMessage(
-                          "회차가 정리되었습니다. 1회차부터 다시 시작합니다."
-                        );
-                        loadData();
-                      } catch (error) {
-                        console.error("회차 정리 오류:", error);
-                        showMessage(
-                          `회차 정리에 실패했습니다: ${error.message}`,
-                          true
-                        );
-                      } finally {
-                        setLoading(false);
-                      }
-                    }
-                  }}
-                  className="btn-danger"
-                  disabled={loading}
-                >
-                  회차 정리 (1회차부터 다시 시작)
-                </button>
               </div>
             </div>
             <div className="rounds-grid">
