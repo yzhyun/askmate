@@ -178,11 +178,11 @@ app.get("/api/admin", async (req, res) => {
         WHERE target = ${answererName} AND round_id = ${currentRound.id}
       `;
 
-      const askedMemberNames = askedMembers.rows.map(row => row.author);
+      const askedMemberNames = askedMembers.rows.map((row) => row.author);
 
       // 질문 안한 회원들 필터링
-      const unaskedMembers = allMembers.filter(member => 
-        !askedMemberNames.includes(member.answerer_name)
+      const unaskedMembers = allMembers.filter(
+        (member) => !askedMemberNames.includes(member.answerer_name)
       );
 
       res.json({ success: true, unaskedMembers });
@@ -338,7 +338,7 @@ app.post("/api/question", async (req, res) => {
       const currentRound = await sql`
         SELECT id FROM rounds WHERE is_active = true ORDER BY created_at DESC LIMIT 1
       `;
-      
+
       if (currentRound.rows.length === 0) {
         return res.status(400).json({ error: "활성 회차가 없습니다." });
       }
@@ -372,7 +372,9 @@ app.get("/api/answer", async (req, res) => {
       const { answererName, password } = req.query;
 
       if (!answererName || !password) {
-        return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+        return res
+          .status(400)
+          .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
       }
 
       console.log("답변자 인증 시도 (GET):", { answererName, password });
@@ -394,14 +396,19 @@ app.get("/api/answer", async (req, res) => {
       }
 
       const storedPassword = passwordResult.rows[0].password;
-      console.log("저장된 비밀번호 (GET):", storedPassword, "입력된 비밀번호:", password);
+      console.log(
+        "저장된 비밀번호 (GET):",
+        storedPassword,
+        "입력된 비밀번호:",
+        password
+      );
 
       if (password === storedPassword) {
         // 현재 활성 회차의 질문들 조회
         const currentRound = await sql`
           SELECT id FROM rounds WHERE is_active = true ORDER BY created_at DESC LIMIT 1
         `;
-        
+
         if (currentRound.rows.length === 0) {
           return res.status(400).json({ error: "활성 회차가 없습니다." });
         }
@@ -440,6 +447,30 @@ app.get("/api/answer", async (req, res) => {
         success: true,
         answers: answers.rows,
       });
+    } else if (action === "qa") {
+      const { roundId, answererName } = req.query;
+      if (!roundId || !answererName) {
+        return res
+          .status(400)
+          .json({ error: "회차 ID와 답변자 이름이 필요합니다." });
+      }
+
+      const qaData = await sql`
+        SELECT 
+          q.id as question_id,
+          q.question,
+          q.author,
+          q.target,
+          q.created_at as question_created_at,
+          a.answer,
+          a.created_at as answer_created_at
+        FROM questions q
+        LEFT JOIN answers a ON q.id = a.question_id AND a.answerer = ${answererName} AND a.round_id = ${roundId}
+        WHERE q.target = ${answererName} AND q.round_id = ${roundId}
+        ORDER BY q.created_at ASC
+      `;
+
+      res.json({ success: true, qaData: qaData.rows });
     } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
     }
@@ -460,7 +491,13 @@ app.post("/api/answer", async (req, res) => {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      console.log("답변 저장 요청:", { answererName, password: "***", questionId, answer, roundId });
+      console.log("답변 저장 요청:", {
+        answererName,
+        password: "***",
+        questionId,
+        answer,
+        roundId,
+      });
 
       // 비밀번호 검증
       const passwordResult = await sql`
