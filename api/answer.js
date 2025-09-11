@@ -19,7 +19,7 @@ export default async function handler(req, res) {
         const currentRound = await sql`
           SELECT id FROM rounds WHERE is_active = true ORDER BY created_at DESC LIMIT 1
         `;
-        
+
         if (currentRound.rows.length === 0) {
           return res.status(400).json({ error: "활성 회차가 없습니다." });
         }
@@ -91,7 +91,9 @@ export default async function handler(req, res) {
         const { answererName, password } = req.query;
 
         if (!answererName || !password) {
-          return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+          return res
+            .status(400)
+            .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
         }
 
         // 답변자 비밀번호 확인
@@ -106,7 +108,9 @@ export default async function handler(req, res) {
 
         const storedPassword = passwordResult.rows[0].password;
         if (password !== storedPassword) {
-          return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
+          return res
+            .status(401)
+            .json({ error: "비밀번호가 올바르지 않습니다." });
         }
 
         // 현재 활성 회차 조회
@@ -119,7 +123,7 @@ export default async function handler(req, res) {
             success: true,
             questions: [],
             answers: [],
-            message: "활성 회차가 없습니다."
+            message: "활성 회차가 없습니다.",
           });
         }
 
@@ -154,10 +158,15 @@ export default async function handler(req, res) {
     } else if (req.method === "POST") {
       // 답변 저장 (인증된 답변자)
       try {
-        const { answererName, password, questionId, answer, roundId } = req.body;
+        const { answererName, password, questionId, answer, roundId } =
+          req.body;
 
         if (!answererName || !password || !questionId || !answer) {
           return res.status(400).json({ error: "필수 필드가 누락되었습니다." });
+        }
+
+        if (!roundId) {
+          return res.status(400).json({ error: "회차 ID가 필요합니다." });
         }
 
         // 답변자 비밀번호 확인
@@ -172,7 +181,9 @@ export default async function handler(req, res) {
 
         const storedPassword = passwordResult.rows[0].password;
         if (password !== storedPassword) {
-          return res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
+          return res
+            .status(401)
+            .json({ error: "비밀번호가 올바르지 않습니다." });
         }
 
         // 답변 저장
@@ -194,9 +205,9 @@ export default async function handler(req, res) {
       } catch (error) {
         console.error("답변 저장 오류:", error);
         console.error("요청 데이터:", req.body);
-        res.status(500).json({ 
+        res.status(500).json({
           error: "서버 오류가 발생했습니다.",
-          details: error.message 
+          details: error.message,
         });
       }
     }
@@ -206,9 +217,11 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       try {
         const { roundId, answererName } = req.query;
-        
+
         if (!roundId || !answererName) {
-          return res.status(400).json({ error: "회차 ID와 답변자 이름이 필요합니다." });
+          return res
+            .status(400)
+            .json({ error: "회차 ID와 답변자 이름이 필요합니다." });
         }
 
         const [questionsResult, answersResult] = await Promise.all([
@@ -224,15 +237,17 @@ export default async function handler(req, res) {
             JOIN questions q ON a.question_id = q.id
             WHERE q.round_id = ${roundId} AND a.answerer = ${answererName}
             ORDER BY a.created_at DESC
-          `
+          `,
         ]);
 
         // 질문과 답변을 매칭하여 QA 데이터 생성
-        const qaData = questionsResult.rows.map(question => {
-          const answer = answersResult.rows.find(a => a.question_id === question.id);
+        const qaData = questionsResult.rows.map((question) => {
+          const answer = answersResult.rows.find(
+            (a) => a.question_id === question.id
+          );
           return {
             question: question,
-            answer: answer || null
+            answer: answer || null,
           };
         });
 
@@ -245,8 +260,7 @@ export default async function handler(req, res) {
         res.status(500).json({ error: "서버 오류가 발생했습니다." });
       }
     }
-  }
-  else {
+  } else {
     res.status(400).json({ error: "Invalid action" });
   }
 }

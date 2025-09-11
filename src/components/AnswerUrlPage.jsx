@@ -20,8 +20,12 @@ function AnswerUrlPage() {
     const loadCurrentRound = async () => {
       try {
         const data = await api.get("/api/admin?action=rounds&type=current");
+        console.log("현재 활성 회차 조회 결과:", data);
         if (data.success && data.round) {
           setCurrentRoundId(data.round.id);
+          console.log("현재 활성 회차 ID:", data.round.id);
+        } else {
+          console.warn("활성 회차가 없습니다:", data);
         }
       } catch (error) {
         console.error("현재 활성 회차 조회 오류:", error);
@@ -84,6 +88,7 @@ function AnswerUrlPage() {
 
     if (!currentRoundId) {
       console.error("현재 활성 회차가 없습니다.");
+      alert("현재 활성 회차가 없습니다. 관리자에게 문의하세요.");
       return;
     }
 
@@ -137,7 +142,7 @@ function AnswerUrlPage() {
         answer: answerText,
         roundId: currentRoundId,
       });
-      
+
       // 사용자에게 에러 메시지 표시
       alert(`답변 저장에 실패했습니다: ${error.message || "알 수 없는 오류"}`);
     } finally {
