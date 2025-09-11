@@ -298,7 +298,6 @@ const AdminPage = () => {
     }
   };
 
-
   // 답변자 선택 관리
   const addAnswerer = async () => {
     if (!newTargetName.trim()) {
@@ -335,7 +334,9 @@ const AdminPage = () => {
     setLoadingQA(true);
     try {
       const data = await api.get(
-        `/api/data?type=qa&roundId=${selectedRoundForQA}&answererName=${encodeURIComponent(selectedAnswererForQA)}`
+        `/api/data?type=qa&roundId=${selectedRoundForQA}&answererName=${encodeURIComponent(
+          selectedAnswererForQA
+        )}`
       );
 
       setQaData(data.qaData || []);
