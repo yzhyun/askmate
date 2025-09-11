@@ -511,7 +511,9 @@ app.post("/api/admin/set-password", async (req, res) => {
     const { password } = req.body;
 
     if (!password || password.length < 4) {
-      return res.status(400).json({ error: "4자리 이상의 비밀번호를 입력해주세요." });
+      return res
+        .status(400)
+        .json({ error: "4자리 이상의 비밀번호를 입력해주세요." });
     }
 
     await setAdminPassword(password);
@@ -1113,7 +1115,7 @@ app.get("/api/targets", async (req, res) => {
 app.post("/api/rounds", async (req, res) => {
   try {
     const { title, description } = req.body;
-    
+
     if (!title) {
       return res.status(400).json({ error: "회차 제목이 필요합니다." });
     }
@@ -1130,7 +1132,7 @@ app.post("/api/rounds", async (req, res) => {
 app.delete("/api/rounds/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     if (!id) {
       return res.status(400).json({ error: "회차 ID가 필요합니다." });
     }
@@ -1148,7 +1150,7 @@ app.delete("/api/rounds/:id", async (req, res) => {
 app.post("/api/members", async (req, res) => {
   try {
     const { name } = req.body;
-    
+
     if (!name) {
       return res.status(400).json({ error: "멤버 이름이 필요합니다." });
     }
@@ -1165,9 +1167,11 @@ app.post("/api/members", async (req, res) => {
 app.post("/api/targets", async (req, res) => {
   try {
     const { name, roundId } = req.body;
-    
+
     if (!name || !roundId) {
-      return res.status(400).json({ error: "타겟 이름과 회차 ID가 필요합니다." });
+      return res
+        .status(400)
+        .json({ error: "타겟 이름과 회차 ID가 필요합니다." });
     }
 
     await addTarget(name, parseInt(roundId));
@@ -1184,7 +1188,9 @@ app.post("/api/answerer-password", async (req, res) => {
     const { answererName, password } = req.body;
 
     if (!answererName || !password) {
-      return res.status(400).json({ error: "답변자 이름과 비밀번호가 필요합니다." });
+      return res
+        .status(400)
+        .json({ error: "답변자 이름과 비밀번호가 필요합니다." });
     }
 
     await setAnswererPassword(answererName, password);
@@ -1196,17 +1202,33 @@ app.post("/api/answerer-password", async (req, res) => {
   }
 });
 
+// 답변자 비밀번호 조회 API
+app.get("/api/answerer-password", async (req, res) => {
+  try {
+    const passwords = await sql`
+      SELECT answerer_name, password, created_at 
+      FROM answerer_passwords 
+      ORDER BY created_at DESC
+    `;
+
+    res.json({ success: true, passwords: passwords.rows });
+  } catch (error) {
+    console.error("답변자 비밀번호 조회 오류:", error);
+    res.status(500).json({ error: "답변자 비밀번호 조회에 실패했습니다." });
+  }
+});
+
 // Vercel에서는 export default를 사용
 // 통합 관리자 API (Vercel 호환)
 app.get("/api/admin", async (req, res) => {
   try {
     const { action, password } = req.query;
-    
+
     if (action === "login") {
       if (!password) {
         return res.status(400).json({ error: "비밀번호를 입력해주세요." });
       }
-      
+
       const isValid = await verifyAdminPassword(password);
       if (isValid) {
         res.json({ success: true, message: "인증 성공" });
@@ -1215,7 +1237,7 @@ app.get("/api/admin", async (req, res) => {
       }
       return;
     }
-    
+
     if (action === "rounds") {
       const { type } = req.query;
       if (type === "current") {
@@ -1246,7 +1268,7 @@ app.get("/api/admin", async (req, res) => {
 app.post("/api/admin", async (req, res) => {
   try {
     const { action } = req.query;
-    
+
     if (action === "rounds") {
       const { title, description } = req.body;
       const newRound = await addRound(title, description);
@@ -1263,7 +1285,7 @@ app.post("/api/admin", async (req, res) => {
 export default app;
 
 // 로컬 개발 환경에서만 listen 실행
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
     console.log(`파일 저장 서버가 http://localhost:${PORT}에서 실행 중입니다.`);
     console.log("💡 데이터베이스 초기화가 필요하다면: npm run init-db");
