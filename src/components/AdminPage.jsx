@@ -245,8 +245,11 @@ const AdminPage = () => {
       // 선택된 답변자들을 타겟으로 추가
       const answererInfo = [];
       for (const answererName of selectedAnswerers) {
-        // 답변자 추가
-        await api.post("/api/admin?action=targets", { name: answererName });
+        // 답변자를 타겟으로 추가 (roundId 포함)
+        await api.post("/api/admin?action=targets", { 
+          name: answererName, 
+          roundId: newRoundId 
+        });
 
         // 4자리 비밀번호 생성 (매번 다른 비밀번호)
         const autoPassword = Math.floor(1000 + Math.random() * 9000).toString();
