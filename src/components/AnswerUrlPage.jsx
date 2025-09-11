@@ -42,7 +42,11 @@ function AnswerUrlPage() {
 
     try {
       // 답변자 인증을 위한 API 호출
-      const data = await api.get(`/api/answer?action=auth&answererName=${encodeURIComponent(answererName)}&password=${encodeURIComponent(password)}`);
+      const data = await api.get(
+        `/api/answer?action=auth&answererName=${encodeURIComponent(
+          answererName
+        )}&password=${encodeURIComponent(password)}`
+      );
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -103,12 +107,12 @@ function AnswerUrlPage() {
           newSet.delete(questionId);
           return newSet;
         });
-        
+
         // 답변 텍스트 초기화
         setAnswerTexts((prev) => ({ ...prev, [questionId]: "" }));
 
         console.log("답변 저장 성공:", data.answer);
-        
+
         // 다음 질문으로 자동 이동
         const currentIndex = questions.findIndex((q) => q.id === questionId);
         if (currentIndex < questions.length - 1) {
@@ -126,6 +130,16 @@ function AnswerUrlPage() {
       }
     } catch (error) {
       console.error("답변 저장 오류:", error);
+      console.error("요청 데이터:", {
+        answererName,
+        password: "***",
+        questionId,
+        answer: answerText,
+        roundId: currentRoundId,
+      });
+      
+      // 사용자에게 에러 메시지 표시
+      alert(`답변 저장에 실패했습니다: ${error.message || "알 수 없는 오류"}`);
     } finally {
       // 해당 질문의 저장 중 상태 해제
       setSavingQuestions((prev) => {
@@ -151,6 +165,7 @@ function AnswerUrlPage() {
     setAnswerTexts((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  // 조건부 렌더링을 Hook 사용 후로 이동
   if (!isAuthenticated) {
     return (
       <div className="container">
