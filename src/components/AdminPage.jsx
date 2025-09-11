@@ -223,7 +223,7 @@ const AdminPage = () => {
   const loadUnaskedMembersCounts = async (targets) => {
     try {
       const unaskedCounts = {};
-      
+
       for (const target of targets) {
         try {
           const data = await api.get(
@@ -231,7 +231,7 @@ const AdminPage = () => {
               target.name
             )}`
           );
-          
+
           if (data.success) {
             unaskedCounts[target.name] = data.unaskedMembers.length;
           }
@@ -240,8 +240,9 @@ const AdminPage = () => {
           unaskedCounts[target.name] = 0;
         }
       }
-      
+
       setUnaskedMembers(unaskedCounts);
+      console.log("질문안함 멤버 수 로드 완료:", unaskedCounts);
     } catch (error) {
       console.error("질문안함 멤버 수 로드 오류:", error);
     }
@@ -711,7 +712,8 @@ const AdminPage = () => {
                                   onClick={() => getUnaskedMembers(target.name)}
                                   className="unasked-btn"
                                 >
-                                  질문안함({unaskedMembers[target.name]?.length || 0})
+                                  질문안함(
+                                  {unaskedMembers[target.name] || 0})
                                 </button>
                               </div>
                             );
