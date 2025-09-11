@@ -74,7 +74,9 @@ const AdminPage = () => {
     setMessage("");
 
     try {
-      await api.get(`/api/admin?action=login&password=${encodeURIComponent(adminPassword)}`);
+      await api.get(
+        `/api/admin?action=login&password=${encodeURIComponent(adminPassword)}`
+      );
 
       setIsAuthenticated(true);
       localStorage.setItem("adminAuthenticated", "true");
@@ -565,15 +567,24 @@ const AdminPage = () => {
                 <div className="rounds-count">총 {rounds.length}개 회차</div>
                 <button
                   onClick={async () => {
-                    if (window.confirm("⚠️ 경고: 모든 회차를 삭제하고 1회차부터 다시 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.")) {
+                    if (
+                      window.confirm(
+                        "⚠️ 경고: 모든 회차를 삭제하고 1회차부터 다시 시작하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다."
+                      )
+                    ) {
                       try {
                         setLoading(true);
                         await api.delete("/api/admin?action=rounds");
-                        showMessage("회차가 정리되었습니다. 1회차부터 다시 시작합니다.");
+                        showMessage(
+                          "회차가 정리되었습니다. 1회차부터 다시 시작합니다."
+                        );
                         loadData();
                       } catch (error) {
                         console.error("회차 정리 오류:", error);
-                        showMessage(`회차 정리에 실패했습니다: ${error.message}`, true);
+                        showMessage(
+                          `회차 정리에 실패했습니다: ${error.message}`,
+                          true
+                        );
                       } finally {
                         setLoading(false);
                       }

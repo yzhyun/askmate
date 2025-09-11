@@ -3,6 +3,31 @@ import { getAllTargets } from "../src/utils/database.js";
 
 export default async function handler(req, res) {
   const { action } = req.query;
+  
+  // 데이터베이스 연결 테스트
+  try {
+    console.log("데이터베이스 연결 테스트 시작");
+    const testQuery = await sql`SELECT 1 as test`;
+    console.log("데이터베이스 연결 성공:", testQuery.rows);
+    
+    // 테이블 존재 여부 확인
+    const tablesQuery = await sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name IN ('rounds', 'answerer_passwords', 'members', 'targets', 'questions', 'answers')
+      ORDER BY table_name
+    `;
+    console.log("존재하는 테이블들:", tablesQuery.rows);
+    
+  } catch (dbError) {
+    console.error("데이터베이스 연결 실패:", dbError);
+    return res.status(500).json({
+      success: false,
+      error: "데이터베이스 연결에 실패했습니다.",
+      details: dbError.message
+    });
+  }
 
   // 관리자 인증
   if (action === "login") {
@@ -243,9 +268,11 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       try {
         const { type } = req.query;
+        console.log("회차 조회 요청:", { type, method: req.method });
 
         if (type === "current") {
           // 현재 활성 회차 조회
+          console.log("현재 활성 회차 조회 시작");
           const currentRound = await sql`
             SELECT id, round_number, title, description, is_active, created_at 
             FROM rounds 
@@ -253,6 +280,8 @@ export default async function handler(req, res) {
             ORDER BY created_at DESC 
             LIMIT 1
           `;
+
+          console.log("현재 활성 회차 조회 결과:", currentRound.rows);
 
           if (currentRound.rows.length === 0) {
             return res.status(200).json({
@@ -268,6 +297,7 @@ export default async function handler(req, res) {
           });
         } else {
           // 모든 회차 조회
+          console.log("모든 회차 조회 시작");
           const rounds = await sql`
             SELECT id, round_number, title, description, is_active, created_at 
             FROM rounds 
@@ -283,9 +313,12 @@ export default async function handler(req, res) {
         }
       } catch (error) {
         console.error("회차 조회 오류:", error);
-        res
-          .status(500)
-          .json({ success: false, error: "회차 조회에 실패했습니다." });
+        console.error("오류 스택:", error.stack);
+        res.status(500).json({
+          success: false,
+          error: "회차 조회에 실패했습니다.",
+          details: error.message,
+        });
       }
     } else if (req.method === "POST") {
       // 회차 생성
@@ -329,7 +362,7 @@ export default async function handler(req, res) {
       try {
         // 모든 회차 삭제
         await sql`DELETE FROM rounds`;
-        
+
         // 1회차 생성
         const result = await sql`
           INSERT INTO rounds (round_number, title, description, is_active, created_at)
@@ -348,16 +381,120 @@ export default async function handler(req, res) {
       }
     }
   }
+  // 데이터베이스 초기화
+  else if (action === "init-db") {
+    if (req.method === "POST") {
+      try {
+        console.log("데이터베이스 초기화 시작");
+        
+        // 1. rounds 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS rounds (
+            id SERIAL PRIMARY KEY,
+            round_number INTEGER NOT NULL UNIQUE,
+            title VARCHAR(100) NOT NULL,
+            description TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log("rounds 테이블 생성 완료");
+
+        // 2. answerer_passwords 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS answerer_passwords (
+            id SERIAL PRIMARY KEY,
+            answerer_name VARCHAR(50) NOT NULL UNIQUE,
+            password VARCHAR(10) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log("answerer_passwords 테이블 생성 완료");
+
+        // 3. members 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS members (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL UNIQUE,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log("members 테이블 생성 완료");
+
+        // 4. targets 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS targets (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            round_id INTEGER REFERENCES rounds(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log("targets 테이블 생성 완료");
+
+        // 5. questions 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS questions (
+            id SERIAL PRIMARY KEY,
+            author VARCHAR(50) NOT NULL,
+            target VARCHAR(50) NOT NULL,
+            question TEXT NOT NULL,
+            round_id INTEGER REFERENCES rounds(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT NOW()
+          )
+        `;
+        console.log("questions 테이블 생성 완료");
+
+        // 6. answers 테이블 생성
+        await sql`
+          CREATE TABLE IF NOT EXISTS answers (
+            id SERIAL PRIMARY KEY,
+            question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+            answerer VARCHAR(50) NOT NULL,
+            answer TEXT NOT NULL,
+            round_id INTEGER REFERENCES rounds(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(question_id, answerer)
+          )
+        `;
+        console.log("answers 테이블 생성 완료");
+
+        // 7. 기본 데이터 삽입
+        await sql`
+          INSERT INTO rounds (round_number, title, description, is_active) 
+          VALUES (1, '1회차', '첫 번째 질문-답변 세션', true)
+          ON CONFLICT (round_number) DO NOTHING
+        `;
+        console.log("기본 회차 데이터 삽입 완료");
+
+        res.status(200).json({
+          success: true,
+          message: "데이터베이스가 성공적으로 초기화되었습니다.",
+        });
+      } catch (error) {
+        console.error("데이터베이스 초기화 오류:", error);
+        res.status(500).json({
+          success: false,
+          error: "데이터베이스 초기화에 실패했습니다.",
+          details: error.message
+        });
+      }
+    }
+  }
   // 답변자 비밀번호 관리
   else if (action === "passwords") {
     if (req.method === "GET") {
       // 답변자 비밀번호 조회
       try {
+        console.log("답변자 비밀번호 조회 시작");
         const passwords = await sql`
           SELECT answerer_name, password, created_at 
           FROM answerer_passwords 
           ORDER BY created_at DESC
         `;
+
+        console.log("답변자 비밀번호 조회 결과:", passwords.rows);
 
         res.status(200).json({
           success: true,
@@ -365,9 +502,11 @@ export default async function handler(req, res) {
         });
       } catch (error) {
         console.error("답변자 비밀번호 조회 오류:", error);
+        console.error("오류 스택:", error.stack);
         res.status(500).json({
           success: false,
           error: "답변자 비밀번호 조회에 실패했습니다.",
+          details: error.message,
         });
       }
     } else if (req.method === "POST") {

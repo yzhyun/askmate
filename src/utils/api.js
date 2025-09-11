@@ -1,6 +1,27 @@
 // API 기본 URL 설정 (로컬 개발 vs 프로덕션)
 export const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
 
+// 환경별 API 엔드포인트 매핑
+const getApiEndpoint = (endpoint) => {
+  // 로컬에서는 Express 서버의 기존 엔드포인트 사용
+  if (import.meta.env.DEV) {
+    // 로컬 개발 환경에서는 기존 server.js의 엔드포인트 사용
+    if (endpoint.includes('/api/admin?action=login')) {
+      return '/api/admin/login';
+    }
+    if (endpoint.includes('/api/admin?action=rounds')) {
+      return '/api/rounds';
+    }
+    if (endpoint.includes('/api/admin?action=members')) {
+      return '/api/members';
+    }
+    if (endpoint.includes('/api/admin?action=targets')) {
+      return '/api/targets';
+    }
+  }
+  return endpoint;
+};
+
 // 안전한 JSON 파싱 함수
 export async function safeJsonParse(response) {
   const contentType = response.headers.get("content-type");
@@ -42,7 +63,8 @@ export const api = {
   // GET 요청
   async get(endpoint) {
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`);
+      const mappedEndpoint = getApiEndpoint(endpoint);
+      const response = await fetch(`${API_BASE}${mappedEndpoint}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }

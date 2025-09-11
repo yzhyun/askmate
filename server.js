@@ -1076,7 +1076,99 @@ app.get("/api/qa-data/:roundId/:answererName", async (req, res) => {
   }
 });
 
+// 회차 API
+app.get("/api/rounds", async (req, res) => {
+  try {
+    const rounds = await getAllRounds();
+    res.json({ success: true, rounds });
+  } catch (error) {
+    console.error("회차 조회 오류:", error);
+    res.status(500).json({ error: "회차 조회에 실패했습니다." });
+  }
+});
+
+// 멤버 API
+app.get("/api/members", async (req, res) => {
+  try {
+    const members = await getAllMembers();
+    res.json({ success: true, members });
+  } catch (error) {
+    console.error("멤버 조회 오류:", error);
+    res.status(500).json({ error: "멤버 조회에 실패했습니다." });
+  }
+});
+
+// 타겟 API
+app.get("/api/targets", async (req, res) => {
+  try {
+    const targets = await getAllTargets();
+    res.json({ success: true, targets });
+  } catch (error) {
+    console.error("타겟 조회 오류:", error);
+    res.status(500).json({ error: "타겟 조회에 실패했습니다." });
+  }
+});
+
 // Vercel에서는 export default를 사용
+// 통합 관리자 API (Vercel 호환)
+app.get("/api/admin", async (req, res) => {
+  try {
+    const { action, password } = req.query;
+    
+    if (action === "login") {
+      const isValid = await verifyAdminPassword(password);
+      if (isValid) {
+        res.json({ success: true, message: "인증 성공" });
+      } else {
+        res.status(401).json({ error: "비밀번호가 올바르지 않습니다." });
+      }
+      return;
+    }
+    
+    if (action === "rounds") {
+      const { type } = req.query;
+      if (type === "current") {
+        const currentRound = await getCurrentActiveRound();
+        res.json({ success: true, round: currentRound });
+      } else {
+        const rounds = await getAllRounds();
+        res.json({ success: true, rounds });
+      }
+    } else if (action === "passwords") {
+      // 답변자 비밀번호 조회는 별도 구현 필요
+      res.json({ success: true, passwords: [] });
+    } else if (action === "members") {
+      const members = await getAllMembers();
+      res.json({ success: true, members });
+    } else if (action === "targets") {
+      const targets = await getAllTargets();
+      res.json({ success: true, targets });
+    } else {
+      res.status(400).json({ error: "지원하지 않는 액션입니다." });
+    }
+  } catch (error) {
+    console.error("관리자 API 오류:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
+});
+
+app.post("/api/admin", async (req, res) => {
+  try {
+    const { action } = req.query;
+    
+    if (action === "rounds") {
+      const { title, description } = req.body;
+      const newRound = await addRound(title, description);
+      res.json({ success: true, round: newRound });
+    } else {
+      res.status(400).json({ error: "지원하지 않는 액션입니다." });
+    }
+  } catch (error) {
+    console.error("관리자 API 오류:", error);
+    res.status(500).json({ error: "서버 오류가 발생했습니다." });
+  }
+});
+
 export default app;
 
 // 로컬 개발 환경에서만 listen 실행
