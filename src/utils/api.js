@@ -1,5 +1,8 @@
 // API 기본 URL 설정 (로컬 개발 vs 프로덕션)
-export const API_BASE = import.meta.env.DEV ? "http://localhost:3001" : "";
+export const API_BASE =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:3001"
+    : "";
 
 // 모든 환경에서 동일한 API 엔드포인트 사용
 // 로컬과 배포 환경 모두 Vercel 스타일의 통합 API 사용
