@@ -1097,7 +1097,7 @@ body {
 
 .current-round-card {
   background: #f8f9fa;
-  color: white;
+  color: #333;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -1255,7 +1255,7 @@ body {
 }
 
 .create-round-btn {
-  background: #f8f9fa;
+  background: #007bff;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
