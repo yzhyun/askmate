@@ -15,27 +15,10 @@ function AnswerPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 먼저 활성 회차가 있는지 확인
-        const roundResponse = await fetch(
-          "/api/rounds/current"
+        // 활성 회차 확인
+        const roundData = await api.get(
+          "/api/admin?action=rounds&type=current"
         );
-        
-        if (!roundResponse.ok) {
-          console.error("API 호출 실패:", roundResponse.status);
-          setQuestions([]);
-          setAvailableTargets([]);
-          return;
-        }
-        
-        const contentType = roundResponse.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          console.error("JSON 응답이 아닙니다:", contentType);
-          setQuestions([]);
-          setAvailableTargets([]);
-          return;
-        }
-        
-        const roundData = await api.get("/api/admin?action=rounds&type=current");
 
         if (!roundData.success || !roundData.round) {
           setQuestions([]);
@@ -71,12 +54,14 @@ function AnswerPage() {
         setAnsweredQuestions(answeredIds);
 
         // 데이터베이스에서 가져온 대상자 목록 사용
-        if (targetsData.success) {
-          const activeTargets = targetsData.targets
-            .filter((t) => t.is_active)
+        if (targetsData.success && roundData.success && roundData.round) {
+          // 현재 활성 회차의 답변자만 표시
+          const currentRoundId = roundData.round.id;
+          const currentRoundTargets = targetsData.targets
+            .filter((t) => t.is_active && t.round_id === currentRoundId)
             .map((t) => t.name);
-          console.log("AnswerPage - 활성 대상자들:", activeTargets);
-          setAvailableTargets(["전체", ...activeTargets]);
+          console.log("AnswerPage - 현재 회차 대상자들:", currentRoundTargets);
+          setAvailableTargets(["전체", ...currentRoundTargets]);
         } else {
           // 폴백: 질문에서 대상자 추출
           const targets = [...new Set(serverQuestions.map((q) => q.target))];

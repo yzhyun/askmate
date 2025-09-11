@@ -19,27 +19,32 @@ function QuestionForm({ onAddQuestion, onTargetChange }) {
         sessionStorage.removeItem("cachedMembers");
 
         // 캐시가 없으면 API 호출
-        const [targetsData, membersData] = await Promise.all([
-          api.get("/api/admin?action=current-targets"),
+        const [targetsData, membersData, currentRoundData] = await Promise.all([
+          api.get("/api/admin?action=targets"),
           api.get("/api/admin?action=members"),
+          api.get("/api/admin?action=rounds&type=current"),
         ]);
 
-        if (targetsData.success) {
-          const activeTargets = targetsData.targets.map((t) => t.name);
-          setAvailableTargets(activeTargets);
+        if (targetsData.success && currentRoundData.success && currentRoundData.round) {
+          // 현재 활성 회차의 답변자만 표시
+          const currentRoundId = currentRoundData.round.id;
+          const currentRoundTargets = targetsData.targets
+            .filter((t) => t.is_active && t.round_id === currentRoundId)
+            .map((t) => t.name);
+          setAvailableTargets(currentRoundTargets);
           sessionStorage.setItem(
             "cachedTargets",
-            JSON.stringify(activeTargets)
+            JSON.stringify(currentRoundTargets)
           );
 
           // 첫 번째 target 자동 선택
-          if (activeTargets.length > 0) {
+          if (currentRoundTargets.length > 0) {
             setFormData((prev) => ({
               ...prev,
-              target: activeTargets[0],
+              target: currentRoundTargets[0],
             }));
             if (onTargetChange) {
-              onTargetChange(activeTargets[0]);
+              onTargetChange(currentRoundTargets[0]);
             }
           }
         }
