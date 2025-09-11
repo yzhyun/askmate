@@ -1606,7 +1606,7 @@ app.delete("/api/admin", async (req, res) => {
       const { id } = req.query;
       if (id) {
         // 특정 회차 삭제
-        await sql`DELETE FROM rounds WHERE id = ${id} CASCADE`;
+        await sql`DELETE FROM rounds WHERE id = ${id}`;
         res.json({ success: true, message: "회차가 삭제되었습니다." });
       } else {
         // 모든 회차 삭제
