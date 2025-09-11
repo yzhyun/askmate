@@ -121,11 +121,11 @@ app.get("/api/admin", async (req, res) => {
           targets.map(async (target) => {
             const questionCount = await sql`
               SELECT COUNT(*) as count FROM questions 
-              WHERE target = ${target.name} AND round_id = ${target.round_id}
+              WHERE target = ${target.answerer_name} AND round_id = ${target.round_id}
             `;
             const answerCount = await sql`
               SELECT COUNT(*) as count FROM answers 
-              WHERE answerer = ${target.name} AND round_id = ${target.round_id}
+              WHERE answerer = ${target.answerer_name} AND round_id = ${target.round_id}
             `;
             return {
               ...target,
@@ -144,7 +144,7 @@ app.get("/api/admin", async (req, res) => {
     else if (action === "passwords") {
       try {
         const passwords = await sql`
-          SELECT name, password, round_id, created_at
+          SELECT answerer_name, password, created_at
           FROM answerer_passwords
           ORDER BY created_at DESC
         `;
@@ -182,7 +182,7 @@ app.get("/api/admin", async (req, res) => {
 
       // 질문 안한 회원들 필터링
       const unaskedMembers = allMembers.filter(member => 
-        !askedMemberNames.includes(member.name)
+        !askedMemberNames.includes(member.answerer_name)
       );
 
       res.json({ success: true, unaskedMembers });
@@ -257,35 +257,35 @@ app.post("/api/admin", async (req, res) => {
     }
     // 회원 추가
     else if (action === "members") {
-      const { name } = req.body;
+      const { answerer_name } = req.body;
 
-      if (!name) {
+      if (!answerer_name) {
         return res.status(400).json({ error: "회원 이름이 필요합니다." });
       }
 
-      await addMember(name);
+      await addMember(answerer_name);
       res.json({ success: true, message: "회원이 추가되었습니다." });
     }
     // 답변자 추가
     else if (action === "targets") {
-      const { name, roundId } = req.body;
+      const { answerer_name, roundId } = req.body;
 
-      if (!name) {
+      if (!answerer_name) {
         return res.status(400).json({ error: "답변자 이름이 필요합니다." });
       }
 
-      await addTarget(name, roundId);
+      await addTarget(answerer_name, roundId);
       res.json({ success: true, message: "답변자가 추가되었습니다." });
     }
     // 답변자 비밀번호 설정
     else if (action === "passwords") {
-      const { name, password, roundId } = req.body;
+      const { answerer_name, password, roundId } = req.body;
 
-      if (!name || !password) {
+      if (!answerer_name || !password) {
         return res.status(400).json({ error: "이름과 비밀번호가 필요합니다." });
       }
 
-      await setAnswererPassword(name, password, roundId);
+      await setAnswererPassword(answerer_name, password, roundId);
       res.json({ success: true, message: "비밀번호가 설정되었습니다." });
     } else {
       res.status(400).json({ error: "지원하지 않는 액션입니다." });
@@ -380,7 +380,7 @@ app.get("/api/answer", async (req, res) => {
       // 비밀번호 검증
       const passwordResult = await sql`
         SELECT password FROM answerer_passwords 
-        WHERE name = ${answererName}
+        WHERE answerer_name = ${answererName}
         ORDER BY created_at DESC LIMIT 1
       `;
 
@@ -465,7 +465,7 @@ app.post("/api/answer", async (req, res) => {
       // 비밀번호 검증
       const passwordResult = await sql`
         SELECT password FROM answerer_passwords 
-        WHERE name = ${answererName}
+        WHERE answerer_name = ${answererName}
         ORDER BY created_at DESC LIMIT 1
       `;
 
